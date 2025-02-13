@@ -101,7 +101,7 @@ class InvoiceServiceTest(TestCase):
         self.assertEqual(actual_result, [self.invoice1.number])
 
     def test_accounting_entries_with_enums(self):
-        
+
         # Arrange
         invoices = [self.invoice1, self.invoice2, self.invoice3]
 
@@ -110,6 +110,11 @@ class InvoiceServiceTest(TestCase):
         accounting_entries = actual_result["accounting_entries"]
 
         # Assert
+        self.assertIn("sorted_invoices", actual_result)
+        self.assertIn("missing_invoice_numbers", actual_result)
+        self.assertIn("duplicate_invoice_numbers", actual_result)
+        self.assertIn("accounting_entries", actual_result)
+
         entry = accounting_entries[0]
         self.assertEqual(entry.account_code, AccountingCodes.PURCHASES)
         self.assertEqual(entry.debit_credit, PaymentType.DEBIT)
