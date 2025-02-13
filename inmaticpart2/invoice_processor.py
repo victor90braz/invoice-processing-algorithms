@@ -3,16 +3,17 @@ from decimal import Decimal
 from inmaticpart2.accounting_codes import AccountingCodes
 from inmaticpart2.payment_type import PaymentType
 from inmaticpart2.accounting_entry import AccountingEntry
-from inmaticpart2.models import InvoiceModel  
+from inmaticpart2.models import InvoiceModel
+import re
+
 
 class InvoiceProcessor:
 
     def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
-
         self.validate_invoice_format([invoice.number for invoice in invoices])
 
         sorted_invoices = self.sort_invoices_by_date(invoices)
-        
+
         missing_invoice_numbers = self.detect_missing_invoice_numbers(sorted_invoices)
         duplicate_invoice_numbers = self.detect_duplicate_invoice_numbers(sorted_invoices)
 
@@ -55,26 +56,24 @@ class InvoiceProcessor:
         }
 
     def validate_invoice_format(self, invoice_numbers: List[str]) -> None:
-        import re
         pattern = r"^F\d{4}/\d{2}$"
         for invoice_number in invoice_numbers:
             if not re.match(pattern, invoice_number):
                 raise ValueError(f"Invalid invoice number format: {invoice_number}")
 
     def detect_missing_invoice_numbers(self, sorted_invoices: List[InvoiceModel]) -> List[str]:
-
         existing_invoice_numbers = [int(invoice.number.split("/")[1]) for invoice in sorted_invoices]
-        
-        total_invoice_count_for_year = 42  
+
+        total_invoice_count_for_year = 42
         expected_invoice_numbers = range(1, total_invoice_count_for_year + 1)
-        
+
         missing_invoice_numbers = [
             f"F2023/{str(expected_number).zfill(2)}" for expected_number in expected_invoice_numbers 
             if expected_number not in existing_invoice_numbers
         ]
-        
+
         return missing_invoice_numbers
-  
+
     def sort_invoices_by_date(self, invoices: List[InvoiceModel]) -> List[InvoiceModel]:
         return sorted(invoices, key=lambda invoice: invoice.date)
 
