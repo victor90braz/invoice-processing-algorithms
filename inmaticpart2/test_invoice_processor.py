@@ -5,7 +5,7 @@ from inmaticpart2.accounting_codes import AccountingCodes
 from inmaticpart2.payment_type import PaymentType
 from inmaticpart2.invoice_states import InvoiceStates
 from inmaticpart2.models import InvoiceModel
-from .factories import InvoiceModelFactory 
+from .factories import InvoiceModelFactory
 from datetime import date
 
 
@@ -14,10 +14,11 @@ class InvoiceServiceTest(TestCase):
     def setUp(self):
         self.invoiceProcessor = InvoiceProcessor()
 
-        InvoiceModelFactory(
+        # Arrange
+        self.invoice1 = InvoiceModelFactory(
             number="F2023/01",
-            provider="Provider A",
-            concept="Service 1",
+            provider="Iberdrola",
+            concept="Electricidad - Consumo enero 2023",
             base_value=Decimal("100.00"),
             vat=Decimal("21.00"),
             total_value=Decimal("121.00"),
@@ -25,10 +26,10 @@ class InvoiceServiceTest(TestCase):
             state=InvoiceStates.ACCOUNTED
         )
 
-        InvoiceModelFactory(
+        self.invoice2 = InvoiceModelFactory(
             number="F2023/02",
-            provider="Provider B",
-            concept="Service 2",
+            provider="Telefónica",
+            concept="Servicios de telefonía fija y móvil",
             base_value=Decimal("200.00"),
             vat=Decimal("42.00"),
             total_value=Decimal("242.00"),
@@ -36,10 +37,10 @@ class InvoiceServiceTest(TestCase):
             state=InvoiceStates.PAID
         )
 
-        InvoiceModelFactory(
+        self.invoice3 = InvoiceModelFactory(
             number="F2023/03",
-            provider="Provider C",
-            concept="Service 3",
+            provider="Endesa",
+            concept="Gas Natural - Consumo enero 2023",
             base_value=Decimal("300.00"),
             vat=Decimal("63.00"),
             total_value=Decimal("363.00"),
@@ -50,7 +51,7 @@ class InvoiceServiceTest(TestCase):
     def test_missing_invoice_number(self):
 
         # Arrange
-        invoices = InvoiceModel.objects.all()
+        invoices = [self.invoice1, self.invoice2, self.invoice3]
 
         # Act
         actual_result = self.invoiceProcessor.create_accounting_entries(invoices)
@@ -66,7 +67,7 @@ class InvoiceServiceTest(TestCase):
     def test_invoice_number_format(self):
 
         # Arrange
-        valid_invoice_numbers = ["F2023/01", "F2023/02", "F2023/03"]
+        valid_invoice_numbers = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
 
         # Act
         self.invoiceProcessor.validate_invoice_format(valid_invoice_numbers)
@@ -78,32 +79,31 @@ class InvoiceServiceTest(TestCase):
     def test_sort_invoices_by_date(self):
 
         # Arrange
-        invoices = InvoiceModel.objects.all()
+        invoices = [self.invoice1, self.invoice2, self.invoice3]
 
         # Act
         sorted_result = self.invoiceProcessor.sort_invoices_by_date(invoices)
 
         # Assert
         sorted_invoice_numbers = [invoice.number for invoice in sorted_result]
-        expected_result = ["F2023/01", "F2023/02", "F2023/03"]
+        expected_result = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
         self.assertEqual(sorted_invoice_numbers, expected_result)
 
     def test_duplicate_invoice_detection(self):
 
         # Arrange
-        duplicate_invoices = InvoiceModel.objects.all()
-        duplicate_invoices = list(duplicate_invoices) + [duplicate_invoices[0]]
+        duplicate_invoices = [self.invoice1, self.invoice1, self.invoice2, self.invoice3]
 
         # Act
         actual_result = self.invoiceProcessor.detect_duplicate_invoice_numbers(duplicate_invoices)
 
         # Assert
-        self.assertEqual(actual_result, ["F2023/01"])
+        self.assertEqual(actual_result, [self.invoice1.number])
 
     def test_accounting_entries_with_enums(self):
-
+        
         # Arrange
-        invoices = InvoiceModel.objects.all()
+        invoices = [self.invoice1, self.invoice2, self.invoice3]
 
         # Act
         actual_result = self.invoiceProcessor.create_accounting_entries(invoices)
