@@ -10,13 +10,19 @@ import re
 class InvoiceProcessor:
 
     def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
+
         self.validate_invoice_format([invoice.number for invoice in invoices])
 
         sorted_invoices = self.sort_invoices_by_date(invoices)
 
-        missing_invoice_numbers = self.detect_missing_invoice_numbers(sorted_invoices)
-        duplicate_invoice_numbers = self.detect_duplicate_invoice_numbers(sorted_invoices)
+        return {
+            "sorted_invoices": sorted_invoices,
+            "missing_invoice_numbers": self.detect_missing_invoice_numbers(sorted_invoices),
+            "duplicate_invoice_numbers": self.detect_duplicate_invoice_numbers(sorted_invoices),
+            "accounting_entries": self.create_accounting_entries_for_invoices(sorted_invoices)
+        }
 
+    def create_accounting_entries_for_invoices(self, sorted_invoices: List[InvoiceModel]) -> List[AccountingEntry]:
         accounting_entries = []
 
         for invoice in sorted_invoices:
@@ -24,36 +30,31 @@ class InvoiceProcessor:
             if not self.is_valid(amount):
                 raise ValueError(f"Invoice {invoice.number} with amount {amount} is not valid.")
             
-            accounting_entries.append(AccountingEntry(
-                account_code=AccountingCodes.PURCHASES,
-                debit_credit=PaymentType.DEBIT,
-                amount=Decimal(invoice.base_value),
-                description=f"Purchases for invoice {invoice.number}",
-                invoice_number=invoice.number
-            ))
+            accounting_entries.extend([
+                AccountingEntry(
+                    account_code=AccountingCodes.PURCHASES,
+                    debit_credit=PaymentType.DEBIT,
+                    amount=Decimal(invoice.base_value),
+                    description=f"Purchases for invoice {invoice.number}",
+                    invoice_number=invoice.number
+                ),
+                AccountingEntry(
+                    account_code=AccountingCodes.VAT_SUPPORTED,
+                    debit_credit=PaymentType.DEBIT,
+                    amount=Decimal(invoice.vat),
+                    description=f"VAT for invoice {invoice.number}",
+                    invoice_number=invoice.number
+                ),
+                AccountingEntry(
+                    account_code=AccountingCodes.SUPPLIERS,
+                    debit_credit=PaymentType.CREDIT,
+                    amount=Decimal(invoice.total_value),
+                    description=f"Total for invoice {invoice.number}",
+                    invoice_number=invoice.number
+                )
+            ])
 
-            accounting_entries.append(AccountingEntry(
-                account_code=AccountingCodes.VAT_SUPPORTED,
-                debit_credit=PaymentType.DEBIT,
-                amount=Decimal(invoice.vat),
-                description=f"VAT for invoice {invoice.number}",
-                invoice_number=invoice.number
-            ))
-
-            accounting_entries.append(AccountingEntry(
-                account_code=AccountingCodes.SUPPLIERS,
-                debit_credit=PaymentType.CREDIT,
-                amount=Decimal(invoice.total_value),
-                description=f"Total for invoice {invoice.number}",
-                invoice_number=invoice.number
-            ))
-
-        return {
-            "sorted_invoices": sorted_invoices,
-            "missing_invoice_numbers": missing_invoice_numbers,
-            "duplicate_invoice_numbers": duplicate_invoice_numbers,
-            "accounting_entries": accounting_entries
-        }
+        return accounting_entries
 
     def validate_invoice_format(self, invoice_numbers: List[str]) -> None:
         pattern = r"^F\d{4}/\d{2}$"
