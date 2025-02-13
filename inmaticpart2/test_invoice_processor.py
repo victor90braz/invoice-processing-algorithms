@@ -2,9 +2,10 @@ from decimal import Decimal
 from django.test import TestCase
 from inmaticpart2.invoice_processor import InvoiceProcessor
 from inmaticpart2.accounting_codes import AccountingCodes
-from inmaticpart2 import models
 from inmaticpart2.payment_type import PaymentType
 from inmaticpart2.invoice_states import InvoiceStates
+from inmaticpart2.models import InvoiceModel
+from .factories import InvoiceModelFactory 
 from datetime import date
 
 
@@ -13,7 +14,7 @@ class InvoiceServiceTest(TestCase):
     def setUp(self):
         self.invoiceProcessor = InvoiceProcessor()
 
-        models.InvoiceModel.objects.create(
+        InvoiceModelFactory(
             number="F2023/01",
             provider="Provider A",
             concept="Service 1",
@@ -24,7 +25,7 @@ class InvoiceServiceTest(TestCase):
             state=InvoiceStates.ACCOUNTED
         )
 
-        models.InvoiceModel.objects.create(
+        InvoiceModelFactory(
             number="F2023/02",
             provider="Provider B",
             concept="Service 2",
@@ -35,7 +36,7 @@ class InvoiceServiceTest(TestCase):
             state=InvoiceStates.PAID
         )
 
-        models.InvoiceModel.objects.create(
+        InvoiceModelFactory(
             number="F2023/03",
             provider="Provider C",
             concept="Service 3",
@@ -49,7 +50,7 @@ class InvoiceServiceTest(TestCase):
     def test_missing_invoice_number(self):
 
         # Arrange
-        invoices = models.InvoiceModel.objects.all()
+        invoices = InvoiceModel.objects.all()
 
         # Act
         actual_result = self.invoiceProcessor.create_accounting_entries(invoices)
@@ -77,7 +78,7 @@ class InvoiceServiceTest(TestCase):
     def test_sort_invoices_by_date(self):
 
         # Arrange
-        invoices = models.InvoiceModel.objects.all()
+        invoices = InvoiceModel.objects.all()
 
         # Act
         sorted_result = self.invoiceProcessor.sort_invoices_by_date(invoices)
@@ -90,7 +91,7 @@ class InvoiceServiceTest(TestCase):
     def test_duplicate_invoice_detection(self):
 
         # Arrange
-        duplicate_invoices = models.InvoiceModel.objects.all()
+        duplicate_invoices = InvoiceModel.objects.all()
         duplicate_invoices = list(duplicate_invoices) + [duplicate_invoices[0]]
 
         # Act
@@ -100,9 +101,9 @@ class InvoiceServiceTest(TestCase):
         self.assertEqual(actual_result, ["F2023/01"])
 
     def test_accounting_entries_with_enums(self):
-        
+
         # Arrange
-        invoices = models.InvoiceModel.objects.all()
+        invoices = InvoiceModel.objects.all()
 
         # Act
         actual_result = self.invoiceProcessor.create_accounting_entries(invoices)

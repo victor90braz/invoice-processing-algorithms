@@ -15,3 +15,10 @@ class InvoiceModelFactory(factory.django.DjangoModelFactory):
     total_value = factory.LazyFunction(lambda: Decimal('121.00'))
     date = factory.LazyFunction(lambda: date(2023, 1, 15))
     state = InvoiceStates.DRAFT
+
+    @factory.post_generation
+    def set_state(self, create, extracted, **kwargs):
+        if extracted:
+            self.state = extracted
+        else:
+            self.state = InvoiceStates.DRAFT
