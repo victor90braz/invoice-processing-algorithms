@@ -100,5 +100,7 @@ Install the `coverage` package if it's not already installed:
 Run the tests with coverage:
 
    ```bash
-   python -m coverage html
+   coverage run --source=inmaticpart2 manage.py test inmaticpart2
+   coverage report
+   coverage html
    ```
