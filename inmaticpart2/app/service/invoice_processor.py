@@ -2,7 +2,7 @@ from typing import List, Dict
 from decimal import Decimal
 from inmaticpart2.app.enums.accounting_codes import AccountingCodes
 from inmaticpart2.app.enums.payment_type import PaymentType
-from inmaticpart2.app.enums.accounting_entry import AccountingEntry
+from inmaticpart2.app.dtos.accounting_entry import AccountingEntry
 from inmaticpart2.models import InvoiceModel
 import re
 
