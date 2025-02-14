@@ -8,8 +8,9 @@ class InvoiceModelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = InvoiceModel
     
+    number = factory.Sequence(lambda n: f"F2023/{n:02d}")
     provider = factory.Faker('company')
-    concept = factory.Faker('text')
+    concept = factory.Faker('sentence', nb_words=5)  
     base_value = factory.LazyFunction(lambda: Decimal('100.00'))
     vat = factory.LazyFunction(lambda: Decimal('21.00'))
     total_value = factory.LazyFunction(lambda: Decimal('121.00'))

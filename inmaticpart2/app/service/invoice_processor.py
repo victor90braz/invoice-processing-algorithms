@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List, Dict
 from decimal import Decimal
 from inmaticpart2.app.enums.accounting_codes import AccountingCodes
@@ -89,3 +90,23 @@ class InvoiceProcessor:
 
     def is_valid(self, amount: float) -> bool:
         return amount > 0
+
+    def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel]) -> Dict:
+        grouped_invoices = defaultdict(lambda: defaultdict(lambda: {"base": Decimal(0), "vat": Decimal(0), "invoices": []}))
+
+        for invoice in invoices:
+            supplier = invoice.provider  
+            month = invoice.date.strftime('%Y-%m')  
+
+            # Add base and VAT to the corresponding supplier and month
+            grouped_invoices[supplier][month]["base"] += Decimal(invoice.base_value)
+            grouped_invoices[supplier][month]["vat"] += Decimal(invoice.vat)
+            grouped_invoices[supplier][month]["invoices"].append(invoice)
+
+        # Sort invoices by date within each group
+        for supplier, months in grouped_invoices.items():
+            for month, data in months.items():
+                data["invoices"] = sorted(data["invoices"], key=lambda invoice: invoice.date)
+
+
+        return grouped_invoices
