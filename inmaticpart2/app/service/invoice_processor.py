@@ -93,24 +93,21 @@ class InvoiceProcessor:
         return amount > 0
 
     def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel], state: InvoiceStates) -> Dict:
+        
         grouped_invoices = defaultdict(lambda: defaultdict(lambda: {"base": Decimal(0), "vat": Decimal(0), "invoices": []}))
 
-        # Filter invoices by state
         invoices = [invoice for invoice in invoices if invoice.state == state]
 
         for invoice in invoices:
             supplier = invoice.provider
             month = invoice.date.strftime('%Y-%m')
 
-            # Add base and VAT to the corresponding supplier and month
             grouped_invoices[supplier][month]["base"] += Decimal(invoice.base_value)
             grouped_invoices[supplier][month]["vat"] += Decimal(invoice.vat)
             grouped_invoices[supplier][month]["invoices"].append(invoice)
 
-        # Sort invoices by date within each group (supplier and month)
         for supplier, months in grouped_invoices.items():
             for month, data in months.items():
-                # Sort invoices by date within the group
                 data["invoices"].sort(key=lambda invoice: invoice.date)
 
         return grouped_invoices
