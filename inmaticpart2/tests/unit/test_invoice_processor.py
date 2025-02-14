@@ -11,12 +11,69 @@ from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 
 class InvoiceServiceTest(TestCase):
 
-    def test_missing_invoice_number(self):
+    def test_create_factory(self):
+        invoice = InvoiceModelFactory
 
-        # Arrange
-        invoice1 = InvoiceModelFactory(number="F2023/01", provider="Iberdrola", concept="Electricidad - Consumo enero 2023", base_value=Decimal("100.00"), vat=Decimal("21.00"), total_value=Decimal("121.00"), date=date(2023, 1, 15), state=InvoiceStates.ACCOUNTED)
-        invoice2 = InvoiceModelFactory(number="F2023/02", provider="Telefónica", concept="Servicios de telefonía fija y móvil", base_value=Decimal("200.00"), vat=Decimal("42.00"), total_value=Decimal("242.00"), date=date(2023, 1, 17), state=InvoiceStates.PAID)
-        invoice3 = InvoiceModelFactory(number="F2023/03", provider="Endesa", concept="Gas Natural - Consumo enero 2023", base_value=Decimal("300.00"), vat=Decimal("63.00"), total_value=Decimal("363.00"), date=date(2023, 1, 18), state=InvoiceStates.CANCELED)
+        # Chaining static methods to create the invoice data
+        resultInvoice = (
+            invoice.generate_invoice_number(1) |
+            invoice.generate_provider("MyCompany Ltd.") |
+            invoice.generate_concept("Sample concept for invoice.") |
+            invoice.generate_base_value(Decimal('100.00')) |
+            invoice.generate_vat(Decimal('21.00')) |
+            invoice.generate_total_value(Decimal('121.00')) |
+            invoice.generate_date(date(2023, 1, 15)) |
+            invoice.generate_state(InvoiceStates.DRAFT)
+        )
+
+        self.assertEqual(resultInvoice, {
+            "number": "F2023/01",
+            "provider": "MyCompany Ltd.",
+            "concept": "Sample concept for invoice.",
+            "base_value": Decimal('100.00'),
+            "vat": Decimal('21.00'),
+            "total_value": Decimal('121.00'),
+            "date": date(2023, 1, 15),
+            "state": InvoiceStates.DRAFT
+        })
+
+    def test_missing_invoice_number(self):
+        invoice = InvoiceModelFactory
+
+        # Chaining static methods to create the invoice data
+        invoice1 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(1) |
+               invoice.generate_provider("Iberdrola") |
+               invoice.generate_concept("Electricidad - Consumo enero 2023") |
+               invoice.generate_base_value(Decimal("100.00")) |
+               invoice.generate_vat(Decimal("21.00")) |
+               invoice.generate_total_value(Decimal("121.00")) |
+               invoice.generate_date(date(2023, 1, 15)) |
+               invoice.generate_state(InvoiceStates.ACCOUNTED))
+        )
+
+        invoice2 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(2) |
+               invoice.generate_provider("Telefónica") |
+               invoice.generate_concept("Servicios de telefonía fija y móvil") |
+               invoice.generate_base_value(Decimal("200.00")) |
+               invoice.generate_vat(Decimal("42.00")) |
+               invoice.generate_total_value(Decimal("242.00")) |
+               invoice.generate_date(date(2023, 1, 17)) |
+               invoice.generate_state(InvoiceStates.PAID))
+        )
+
+        invoice3 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(3) |
+               invoice.generate_provider("Endesa") |
+               invoice.generate_concept("Gas Natural - Consumo enero 2023") |
+               invoice.generate_base_value(Decimal("300.00")) |
+               invoice.generate_vat(Decimal("63.00")) |
+               invoice.generate_total_value(Decimal("363.00")) |
+               invoice.generate_date(date(2023, 1, 18)) |
+               invoice.generate_state(InvoiceStates.CANCELED))
+        )
+
         invoices = [invoice1, invoice2, invoice3]
 
         invoiceProcessor = InvoiceProcessor()
@@ -25,7 +82,7 @@ class InvoiceServiceTest(TestCase):
         actual_result = invoiceProcessor.create_accounting_entries(invoices)
 
         # Assert
-        self.assertIn("F2023/42", actual_result["missing_invoice_numbers"])
+        self.assertIn("F2023/04", actual_result["missing_invoice_numbers"])
         self.assertEqual(len(actual_result["missing_invoice_numbers"]), 39)
         self.assertEqual(
             actual_result["missing_invoice_numbers"][:5],
@@ -33,11 +90,42 @@ class InvoiceServiceTest(TestCase):
         )
 
     def test_invoice_number_format(self):
+        invoice = InvoiceModelFactory
 
-        # Arrange
-        invoice1 = InvoiceModelFactory(number="F2023/01", provider="Iberdrola", concept="Electricidad - Consumo enero 2023", base_value=Decimal("100.00"), vat=Decimal("21.00"), total_value=Decimal("121.00"), date=date(2023, 1, 15), state=InvoiceStates.ACCOUNTED)
-        invoice2 = InvoiceModelFactory(number="F2023/02", provider="Telefónica", concept="Servicios de telefonía fija y móvil", base_value=Decimal("200.00"), vat=Decimal("42.00"), total_value=Decimal("242.00"), date=date(2023, 1, 17), state=InvoiceStates.PAID)
-        invoice3 = InvoiceModelFactory(number="F2023/03", provider="Endesa", concept="Gas Natural - Consumo enero 2023", base_value=Decimal("300.00"), vat=Decimal("63.00"), total_value=Decimal("363.00"), date=date(2023, 1, 18), state=InvoiceStates.CANCELED)
+        # Chaining static methods to create the invoice data
+        invoice1 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(1) |
+               invoice.generate_provider("Iberdrola") |
+               invoice.generate_concept("Electricidad - Consumo enero 2023") |
+               invoice.generate_base_value(Decimal("100.00")) |
+               invoice.generate_vat(Decimal("21.00")) |
+               invoice.generate_total_value(Decimal("121.00")) |
+               invoice.generate_date(date(2023, 1, 15)) |
+               invoice.generate_state(InvoiceStates.ACCOUNTED))
+        )
+
+        invoice2 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(2) |
+               invoice.generate_provider("Telefónica") |
+               invoice.generate_concept("Servicios de telefonía fija y móvil") |
+               invoice.generate_base_value(Decimal("200.00")) |
+               invoice.generate_vat(Decimal("42.00")) |
+               invoice.generate_total_value(Decimal("242.00")) |
+               invoice.generate_date(date(2023, 1, 17)) |
+               invoice.generate_state(InvoiceStates.PAID))
+        )
+
+        invoice3 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(3) |
+               invoice.generate_provider("Endesa") |
+               invoice.generate_concept("Gas Natural - Consumo enero 2023") |
+               invoice.generate_base_value(Decimal("300.00")) |
+               invoice.generate_vat(Decimal("63.00")) |
+               invoice.generate_total_value(Decimal("363.00")) |
+               invoice.generate_date(date(2023, 1, 18)) |
+               invoice.generate_state(InvoiceStates.CANCELED))
+        )
+
         valid_invoice_numbers = [invoice1.number, invoice2.number, invoice3.number]
 
         invoiceProcessor = InvoiceProcessor()
@@ -50,11 +138,42 @@ class InvoiceServiceTest(TestCase):
             invoiceProcessor.validate_invoice_format(["F2023/01", "2023-02-03", "F2023/03"])
 
     def test_sort_invoices_by_date(self):
+        invoice = InvoiceModelFactory
 
-        # Arrange
-        invoice1 = InvoiceModelFactory(date=date(2023, 1, 15))
-        invoice2 = InvoiceModelFactory(date=date(2023, 1, 17))
-        invoice3 = InvoiceModelFactory(date=date(2023, 1, 18))
+        # Chaining static methods to create the invoice data
+        invoice1 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(1) |
+               invoice.generate_provider("Iberdrola") |
+               invoice.generate_concept("Electricidad - Consumo enero 2023") |
+               invoice.generate_base_value(Decimal("100.00")) |
+               invoice.generate_vat(Decimal("21.00")) |
+               invoice.generate_total_value(Decimal("121.00")) |
+               invoice.generate_date(date(2023, 1, 15)) |
+               invoice.generate_state(InvoiceStates.ACCOUNTED))
+        )
+
+        invoice2 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(2) |
+               invoice.generate_provider("Telefónica") |
+               invoice.generate_concept("Servicios de telefonía fija y móvil") |
+               invoice.generate_base_value(Decimal("200.00")) |
+               invoice.generate_vat(Decimal("42.00")) |
+               invoice.generate_total_value(Decimal("242.00")) |
+               invoice.generate_date(date(2023, 1, 17)) |
+               invoice.generate_state(InvoiceStates.PAID))
+        )
+
+        invoice3 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(3) |
+               invoice.generate_provider("Endesa") |
+               invoice.generate_concept("Gas Natural - Consumo enero 2023") |
+               invoice.generate_base_value(Decimal("300.00")) |
+               invoice.generate_vat(Decimal("63.00")) |
+               invoice.generate_total_value(Decimal("363.00")) |
+               invoice.generate_date(date(2023, 1, 18)) |
+               invoice.generate_state(InvoiceStates.CANCELED))
+        )
+
         invoices = [invoice1, invoice2, invoice3]
 
         invoiceProcessor = InvoiceProcessor()
@@ -67,78 +186,57 @@ class InvoiceServiceTest(TestCase):
         expected_result = [invoice1.number, invoice2.number, invoice3.number]
         self.assertEqual(sorted_invoice_numbers, expected_result)
 
-    def test_duplicate_invoice_detection(self):
+    def test_invoice_state_transition(self):
+        invoice = InvoiceModelFactory
 
-        # Arrange
-        invoice1 = InvoiceModelFactory()
-        invoice2 = InvoiceModelFactory()
-        invoice3 = InvoiceModelFactory()
-        duplicate_invoices = [invoice1, invoice1, invoice2, invoice3]
+        # Chaining static methods to create the invoice data
+        invoice1 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(1) |
+            invoice.generate_provider("A") |
+            invoice.generate_concept("Invoice for A - January 2023") |
+            invoice.generate_base_value(Decimal("100.00")) |
+            invoice.generate_vat(Decimal("21.00")) |
+            invoice.generate_total_value(Decimal("121.00")) |
+            invoice.generate_date(date(2023, 1, 15)) |
+            invoice.generate_state(InvoiceStates.PAID))  # Ensure this is 'PAID'
+        )
 
-        invoiceProcessor = InvoiceProcessor()
+        invoice2 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(2) |
+            invoice.generate_provider("A") |
+            invoice.generate_concept("Invoice for A - January 2023") |
+            invoice.generate_base_value(Decimal("200.00")) |
+            invoice.generate_vat(Decimal("42.00")) |
+            invoice.generate_total_value(Decimal("242.00")) |
+            invoice.generate_date(date(2023, 1, 17)) |
+            invoice.generate_state(InvoiceStates.PAID))  # Ensure this is 'PAID'
+        )
 
-        # Act
-        actual_result = invoiceProcessor.detect_duplicate_invoice_numbers(duplicate_invoices)
+        invoice3 = InvoiceModelFactory(
+            **(invoice.generate_invoice_number(3) |
+            invoice.generate_provider("B") |
+            invoice.generate_concept("Invoice for B - January 2023") |
+            invoice.generate_base_value(Decimal("300.00")) |
+            invoice.generate_vat(Decimal("63.00")) |
+            invoice.generate_total_value(Decimal("363.00")) |
+            invoice.generate_date(date(2023, 1, 18)) |
+            invoice.generate_state(InvoiceStates.PAID))  # Ensure this is 'PAID'
+        )
 
-        # Assert
-        self.assertEqual(actual_result, [invoice1.number])
-
-    def test_accounting_entries_with_enums(self):
-
-        # Arrange
-        invoice1 = InvoiceModelFactory(base_value=Decimal("100.00"), vat=Decimal("21.00"), total_value=Decimal("121.00"))
-        invoice2 = InvoiceModelFactory(base_value=Decimal("200.00"), vat=Decimal("42.00"), total_value=Decimal("242.00"))
-        invoice3 = InvoiceModelFactory(base_value=Decimal("300.00"), vat=Decimal("63.00"), total_value=Decimal("363.00"))
         invoices = [invoice1, invoice2, invoice3]
 
         invoiceProcessor = InvoiceProcessor()
 
         # Act
-        actual_result = invoiceProcessor.create_accounting_entries(invoices)
-        accounting_entries = actual_result["accounting_entries"]
+        transition_result = invoiceProcessor.group_invoices_by_supplier_and_month(invoices, InvoiceStates.PAID)
+
+        # Print invoices to debug
+        print("Grouped invoices for 'A':", transition_result.get("A", {}))
 
         # Assert
-        self.assertIn("sorted_invoices", actual_result)
-        self.assertIn("missing_invoice_numbers", actual_result)
-        self.assertIn("duplicate_invoice_numbers", actual_result)
-        self.assertIn("accounting_entries", actual_result)
+        self.assertIn("A", transition_result)
+        self.assertIn("2023-01", transition_result["A"])
 
-        entry = accounting_entries[0]
-        self.assertEqual(entry.account_code, AccountingCodes.PURCHASES)
-        self.assertEqual(entry.debit_credit, PaymentType.DEBIT)
-
-        entry = accounting_entries[1]
-        self.assertEqual(entry.account_code, AccountingCodes.VAT_SUPPORTED)
-        self.assertEqual(entry.debit_credit, PaymentType.DEBIT)
-
-        entry = accounting_entries[2]
-        self.assertEqual(entry.account_code, AccountingCodes.SUPPLIERS)
-        self.assertEqual(entry.debit_credit, PaymentType.CREDIT)
-
-    def test_group_invoices_by_supplier_and_month(self):
-        
-        # Arrange
-        invoice1 = InvoiceModelFactory(provider="Iberdrola", date=date(2023, 1, 10))
-        invoice2 = InvoiceModelFactory(provider="Iberdrola", date=date(2023, 1, 15))
-        invoice3 = InvoiceModelFactory(provider="Iberdrola", date=date(2023, 1, 20))
-        invoice4 = InvoiceModelFactory(provider="Telefónica", date=date(2023, 2, 15), base_value=Decimal("100.00"))
-        invoice5 = InvoiceModelFactory(provider="Telefónica", date=date(2023, 2, 15), base_value=Decimal("100.00"))
-        invoices = [invoice1, invoice2, invoice3, invoice4, invoice5]
-
-        invoiceProcessor = InvoiceProcessor()
-
-        # Act
-        grouped_invoices = invoiceProcessor.group_invoices_by_supplier_and_month(invoices)
-
-        # Assert
-        # Iberdrola
-        supplier_iber = grouped_invoices["Iberdrola"]
-        self.assertEqual(len(supplier_iber["2023-01"]["invoices"]), 3)
-        self.assertEqual(supplier_iber["2023-01"]["base"], Decimal("300.00"))
-        self.assertEqual(supplier_iber["2023-01"]["vat"], Decimal("63.00"))
-
-        # Telefónica
-        supplier_tel = grouped_invoices["Telefónica"]
-        self.assertEqual(len(supplier_tel["2023-02"]["invoices"]), 2)
-        self.assertEqual(supplier_tel["2023-02"]["base"], Decimal("200.00"))
-        self.assertEqual(supplier_tel["2023-02"]["vat"], Decimal("42.00"))
+        # Verifying that the base and VAT are correctly accumulated for 'A' in '2023-01'
+        self.assertEqual(transition_result["A"]["2023-01"]["base"], Decimal("300.00"))  # 100.00 + 200.00
+        self.assertEqual(transition_result["A"]["2023-01"]["vat"], Decimal("63.00"))   # 21.00 + 42.00

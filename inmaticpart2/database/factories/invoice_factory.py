@@ -7,19 +7,35 @@ from inmaticpart2.models import InvoiceModel
 class InvoiceModelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = InvoiceModel
-    
-    number = factory.Sequence(lambda n: f"F2023/{n:02d}")
-    provider = factory.Faker('company')
-    concept = factory.Faker('sentence', nb_words=5)  
-    base_value = factory.LazyFunction(lambda: Decimal('100.00'))
-    vat = factory.LazyFunction(lambda: Decimal('21.00'))
-    total_value = factory.LazyFunction(lambda: Decimal('121.00'))
-    date = factory.LazyFunction(lambda: date(2023, 1, 15))
-    state = InvoiceStates.DRAFT
 
-    @factory.post_generation
-    def set_state(self, create, extracted, **kwargs):
-        if extracted:
-            self.state = extracted
-        else:
-            self.state = InvoiceStates.DRAFT
+    @staticmethod
+    def generate_invoice_number(n):
+        return {"number": f"F2023/{n:02d}"}
+
+    @staticmethod
+    def generate_provider(provider="MyCompany Ltd."):
+        return {"provider": provider}
+
+    @staticmethod
+    def generate_concept(concept="Sample concept for invoice."):
+        return {"concept": concept}
+
+    @staticmethod
+    def generate_base_value(base_value=Decimal('100.00')):
+        return {"base_value": base_value}
+
+    @staticmethod
+    def generate_vat(vat=Decimal('21.00')):
+        return {"vat": vat}
+
+    @staticmethod
+    def generate_total_value(total_value=Decimal('121.00')):
+        return {"total_value": total_value}
+
+    @staticmethod
+    def generate_date(invoice_date=date(2023, 1, 15)):
+        return {"date": invoice_date}
+
+    @staticmethod
+    def generate_state(state=InvoiceStates.DRAFT):
+        return {"state": state}
