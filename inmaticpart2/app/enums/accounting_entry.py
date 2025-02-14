@@ -1,8 +1,8 @@
 from decimal import Decimal
-from inmaticpart2.accounting_codes import AccountingCodes  
+from inmaticpart2.app.enums.accounting_codes import AccountingCodes  
 from dataclasses import dataclass
 
-from inmaticpart2.payment_type import PaymentType
+from inmaticpart2.app.enums.payment_type import PaymentType
 
 @dataclass
 class AccountingEntry:

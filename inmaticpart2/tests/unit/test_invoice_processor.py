@@ -1,12 +1,12 @@
 from decimal import Decimal
 from django.test import TestCase
-from inmaticpart2.invoice_processor import InvoiceProcessor
-from inmaticpart2.accounting_codes import AccountingCodes
-from inmaticpart2.payment_type import PaymentType
-from inmaticpart2.invoice_states import InvoiceStates
-from inmaticpart2.models import InvoiceModel
-from .factories import InvoiceModelFactory
+from inmaticpart2.app.service.invoice_processor import InvoiceProcessor
+from inmaticpart2.app.enums.accounting_codes import AccountingCodes
+from inmaticpart2.app.enums.payment_type import PaymentType
+from inmaticpart2.app.enums.invoice_states import InvoiceStates
 from datetime import date
+
+from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 
 
 class InvoiceServiceTest(TestCase):

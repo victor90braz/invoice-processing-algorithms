@@ -1,7 +1,7 @@
 import factory
 from decimal import Decimal
 from datetime import date
-from inmaticpart2.invoice_states import InvoiceStates
+from inmaticpart2.app.enums.invoice_states import InvoiceStates
 from inmaticpart2.models import InvoiceModel
 
 class InvoiceModelFactory(factory.django.DjangoModelFactory):

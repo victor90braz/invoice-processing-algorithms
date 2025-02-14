@@ -25,6 +25,12 @@ This will:
 
 ---
 
+Activate a virtual environment (`myenv`)
+
+```bash
+.\myenv\Scripts\Activate.ps1
+```
+
 To start the server:
 
 ```bash
@@ -41,40 +47,12 @@ python manage.py migrate
 
 ---
 
-## Creating a Test
-
-To create a test:
-
-1. Create a file called `tests.py` in your app directory if it doesn't already exist.
-
-2. Add your test case to the `tests.py` file:
-
-   ```python
-   from django.test import TestCase
-
-   class SimpleTest(TestCase):
-       def test_basic(self):
-           self.assertEqual(1 + 1, 2)
-   ```
-
----
-
 ## Running Tests
 
-To run your tests:
+To run tests for a specific app (e.g., `inmaticpart2`), use:
 
 ```bash
-python manage.py test
-```
-
----
-
-## Running Tests for a Specific App
-
-To run tests for a specific app (e.g., `myapp`), use:
-
-```bash
-python manage.py test myapp
+python manage.py test inmaticpart2.tests
 ```
 
 ---
@@ -84,7 +62,7 @@ python manage.py test myapp
 To run a specific test method from a test case, use this format:
 
 ```bash
-python manage.py test myapp.tests.TestClass.test_method
+python manage.py test inmaticpart2.tests.unit.test_invoice_processor
 ```
 
 ---
