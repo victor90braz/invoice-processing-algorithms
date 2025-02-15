@@ -39,7 +39,22 @@ pip freeze > requirements.txt
 echo Running migrations...
 python manage.py migrate
 
-:: Step 9: Run the Django development server
+:: Step 9: Create .gitignore file to ignore .env
+echo .env >> .gitignore
+echo .gitignore file created to ignore .env
+
+:: Step 10: Create .env-example file
+echo DB_NAME=inmaticpart2 >> .env-example
+echo DB_USER=root >> .env-example
+echo DB_PASSWORD=root >> .env-example
+echo DB_HOST=127.0.0.1 >> .env-example
+echo DB_PORT=3306 >> .env-example
+echo SECRET_KEY=your-secret-key >> .env-example
+echo DEBUG=True >> .env-example
+echo ALLOWED_HOSTS=127.0.0.1,localhost >> .env-example
+echo .env-example file created with example values.
+
+:: Step 11: Run the Django development server
 echo Checking for manage.py...
 if exist manage.py (
     echo Running the Django development server...
