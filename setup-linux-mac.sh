@@ -1,49 +1,113 @@
 #!/bin/bash
 
-# Step 1: Create a virtual environment
-python3 -m venv myenv
+# Set the project name
+PROJECT_NAME="myproject"
 
-# Step 2: Activate the virtual environment
-source ./myenv/bin/activate
-
-# Step 3: Upgrade pip
-python3 -m pip install --upgrade pip
-
-# Step 4: Install Django (or any other dependencies)
-pip install django
-
-# Step 5: Install cryptography
-pip install cryptography
-
-# Step 6: Prompt for project name and create the project if needed
-read -p "Enter the name of your Django project (leave blank to skip creation): " projectName
-
-if [ -n "$projectName" ]; then
-    echo "Creating a new Django project: $projectName"
-    # Check if django-admin is available
-    if ! command -v django-admin &> /dev/null; then
-        echo "django-admin command not found. Please ensure Django is installed properly."
-        exit 1
-    fi
-    django-admin startproject "$projectName" .
-    echo "New Django project '$projectName' created."
+# Step 1: Ensure Python is installed
+echo "[1/12] Ensuring Python is installed..."
+if ! command -v python3 &>/dev/null; then
+    echo "[ERROR] Python is not installed. Please install Python 3."
+    exit 1
 else
-    echo "Skipping project creation. Make sure the project is already set up."
+    echo "[SUCCESS] Python is installed."
 fi
 
-# Step 7: Generate requirements.txt
+# Step 2: Ensure pip is installed
+echo "[2/12] Ensuring pip is installed..."
+if ! command -v pip3 &>/dev/null; then
+    echo "[ERROR] pip is not installed. Installing pip..."
+    python3 -m ensurepip --upgrade
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Failed to install pip!"
+        exit 1
+    fi
+else
+    echo "[SUCCESS] pip is installed."
+fi
+
+# Step 3: Create a virtual environment
+echo "[3/12] Creating a virtual environment..."
+python3 -m venv myenv
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Failed to create virtual environment!"
+    exit 1
+else
+    echo "[SUCCESS] Virtual environment created."
+fi
+
+# Step 4: Activate the virtual environment
+echo "[4/12] Activating the virtual environment..."
+source myenv/bin/activate
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Activation failed!"
+    exit 1
+else
+    echo "[SUCCESS] Virtual environment activated."
+fi
+
+# Step 5: Upgrade pip
+echo "[5/12] Upgrading pip..."
+pip install --upgrade pip > /dev/null
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Failed to upgrade pip!"
+    exit 1
+else
+    echo "[SUCCESS] pip upgraded!"
+fi
+
+# Step 6: Install Django
+echo "[6/12] Installing Django..."
+pip install django > /dev/null
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Django installation failed!"
+    exit 1
+else
+    echo "[SUCCESS] Django installed!"
+fi
+
+# Step 7: Create Django project
+echo "[7/12] Creating Django project: $PROJECT_NAME..."
+django-admin startproject $PROJECT_NAME .
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Project creation failed!"
+    exit 1
+else
+    echo "[SUCCESS] Project '$PROJECT_NAME' created!"
+fi
+
+# Step 8: Generate requirements.txt
+echo "[8/12] Generating requirements.txt..."
 pip freeze > requirements.txt
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Failed to generate requirements.txt!"
+    exit 1
+else
+    echo "[SUCCESS] requirements.txt created!"
+fi
 
-# Step 8: Run migrations to apply any unapplied migrations
-echo "Running migrations..."
-python3 manage.py migrate
+# Step 9: Run migrations
+echo "[9/12] Running database migrations..."
+python manage.py migrate
+if [ $? -ne 0 ]; then
+    echo "[ERROR] Migration failed!"
+    exit 1
+else
+    echo "[SUCCESS] Migrations applied!"
+fi
 
-# Step 9: Create .gitignore file to ignore .env
-echo ".env" > .gitignore
-echo ".gitignore file created to ignore .env"
+# Step 10: Create .gitignore if it doesn't exist
+if [ ! -f .gitignore ]; then
+    echo "[10/12] Creating .gitignore..."
+    echo ".env" > .gitignore
+    echo "[SUCCESS] .gitignore created and configured."
+else
+    echo "[INFO] .gitignore already exists. Skipping."
+fi
 
-# Step 10: Create .env-example file with example values
-cat <<EOL > .env-example
+# Step 11: Create .env-example if it doesn't exist
+if [ ! -f .env-example ]; then
+    echo "[11/12] Creating .env-example..."
+    cat <<EOL > .env-example
 DB_NAME=inmaticpart2
 DB_USER=root
 DB_PASSWORD=root
@@ -53,12 +117,11 @@ SECRET_KEY=your-secret-key
 DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost
 EOL
-echo ".env-example file created with example values."
-
-# Step 11: Run the Django development server
-if [ -f "manage.py" ]; then
-    echo "Running the Django development server..."
-    python3 manage.py runserver
+    echo "[SUCCESS] .env-example created."
 else
-    echo "manage.py not found! Make sure you're in the project directory."
+    echo "[INFO] .env-example already exists. Skipping."
 fi
+
+# Step 12: Run the Django development server
+echo "[12/12] Running the Django development server..."
+python manage.py runserver
