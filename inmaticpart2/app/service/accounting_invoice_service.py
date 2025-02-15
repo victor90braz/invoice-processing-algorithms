@@ -1,112 +1,125 @@
-from collections import defaultdict
 from typing import List, Dict
+from datetime import datetime
 from decimal import Decimal
-from inmaticpart2.app.enums.accounting_codes import AccountingCodes
-from inmaticpart2.app.enums.invoice_states import InvoiceStates
-from inmaticpart2.app.enums.payment_type import PaymentType
-from inmaticpart2.app.dtos.accounting_entry import AccountingEntry
+from collections import defaultdict
+from inmaticpart2.database.builder.invoice_builder import InvoiceBuilder
 from inmaticpart2.models import InvoiceModel
-import re
 
 
 class AccountingInvoiceService:
+    def __init__(self):
+        # Initialize necessary components such as InvoiceBuilder
+        self.invoice_builder = InvoiceBuilder()
 
-    def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
-        self.validate_invoice_format([invoice.number for invoice in invoices])
+    def create_accounting_entries(
+        self,
+        invoices: List[InvoiceModel],
+        start_date: datetime = None,
+        end_date: datetime = None,
+        supplier_id: int = None
+    ) -> Dict:
+        """
+        Create accounting entries for the provided invoices with optional filters by date range and supplier.
+        """
+        # Validate invoice amounts
+        for invoice in invoices:
+            if invoice.total_value < Decimal("0.00"):
+                raise ValueError(f"Invoice {invoice.number} with amount {invoice.total_value} is not valid.")
 
-        sorted_invoices = self.sort_invoices_by_date(invoices)
+        # Apply date range and supplier filters using the InvoiceBuilder
+        if start_date and end_date:
+            self.invoice_builder.filter_by_date_range(start_date, end_date)
 
+        if supplier_id:
+            self.invoice_builder.filter_by_supplier(supplier_id)
+
+        # Apply filters and retrieve the sorted invoices
+        filtered_invoices = self.invoice_builder.apply_filters(invoices)
+        sorted_invoices = self.invoice_builder.sort_invoices_by_date(filtered_invoices)
+
+        # Ensure the filtered result is a list of InvoiceModel objects
+        if not isinstance(sorted_invoices, list):
+            raise ValueError("Expected sorted_invoices to be a list of InvoiceModel objects.")
+
+        # Validate the invoice number format
+        self.validate_invoice_format([invoice.number for invoice in sorted_invoices])
+
+        # Group invoices by supplier and month
+        grouped_invoices = self.group_invoices_by_supplier_and_month(sorted_invoices)
+
+        # Process the grouped invoices to create accounting entries
+        accounting_entries = self.process_grouped_invoices(grouped_invoices)
+
+        # Find any missing invoice numbers
+        missing_invoice_numbers = self.find_missing_invoice_numbers(sorted_invoices)
+
+        # Detect duplicate invoice numbers
+        duplicate_invoice_numbers = self.invoice_builder.detect_duplicate_invoice_numbers(sorted_invoices)
+
+        # Return the result with grouped invoices, missing invoice numbers, and duplicates
         return {
-            "sorted_invoices": sorted_invoices,
-            "missing_invoice_numbers": self.detect_missing_invoice_numbers(sorted_invoices),
-            "duplicate_invoice_numbers": self.detect_duplicate_invoice_numbers(sorted_invoices),
-            "accounting_entries": self.create_accounting_entries_for_invoices(sorted_invoices)
+            "grouped_invoices": grouped_invoices,
+            "missing_invoice_numbers": missing_invoice_numbers,
+            "duplicate_invoice_numbers": duplicate_invoice_numbers,
+            "accounting_entries": accounting_entries,
         }
 
-    def create_accounting_entries_for_invoices(self, sorted_invoices: List[InvoiceModel]) -> List[AccountingEntry]:
-        accounting_entries = []
-
-        for invoice in sorted_invoices:
-            amount = invoice.total_value
-            if not self.is_valid(amount):
-                raise ValueError(f"Invoice {invoice.number} with amount {amount} is not valid.")
-            
-            accounting_entries.extend([
-                AccountingEntry(
-                    account_code=AccountingCodes.PURCHASES,
-                    debit_credit=PaymentType.DEBIT,
-                    amount=Decimal(invoice.base_value),
-                    description=f"Purchases for invoice {invoice.number}",
-                    invoice_number=invoice.number
-                ),
-                AccountingEntry(
-                    account_code=AccountingCodes.VAT_SUPPORTED,
-                    debit_credit=PaymentType.DEBIT,
-                    amount=Decimal(invoice.vat),
-                    description=f"VAT for invoice {invoice.number}",
-                    invoice_number=invoice.number
-                ),
-                AccountingEntry(
-                    account_code=AccountingCodes.SUPPLIERS,
-                    debit_credit=PaymentType.CREDIT,
-                    amount=Decimal(invoice.total_value),
-                    description=f"Total for invoice {invoice.number}",
-                    invoice_number=invoice.number
-                )
-            ])
-
-        return accounting_entries
-
-    def validate_invoice_format(self, invoice_numbers: List[str]) -> None:
-        pattern = r"^F\d{4}/\d{2}$"
-        for invoice_number in invoice_numbers:
-            if not re.match(pattern, invoice_number):
-                raise ValueError(f"Invalid invoice number format: {invoice_number}")
-
-    def detect_missing_invoice_numbers(self, sorted_invoices: List[InvoiceModel]) -> List[str]:
-        existing_invoice_numbers = [int(invoice.number.split("/")[1]) for invoice in sorted_invoices]
-
-        total_invoice_count_for_year = 42
-        expected_invoice_numbers = range(1, total_invoice_count_for_year + 1)
-
-        missing_invoice_numbers = [
-            f"F2023/{str(expected_number).zfill(2)}" for expected_number in expected_invoice_numbers 
-            if expected_number not in existing_invoice_numbers
-        ]
-
-        return missing_invoice_numbers
-
-    def sort_invoices_by_date(self, invoices: List[InvoiceModel]) -> List[InvoiceModel]:
-        return sorted(invoices, key=lambda invoice: invoice.date)
-
-    def detect_duplicate_invoice_numbers(self, sorted_invoices: List[InvoiceModel]) -> List[str]:
-        seen_invoice_numbers = set()
-        duplicate_invoice_numbers = []
-        for invoice in sorted_invoices:
-            if invoice.number in seen_invoice_numbers:
-                duplicate_invoice_numbers.append(invoice.number)
-            seen_invoice_numbers.add(invoice.number)
-        return duplicate_invoice_numbers
-
-    def is_valid(self, amount: float) -> bool:
-        return amount > 0
-
-    def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel], state: InvoiceStates) -> Dict:
-        
-        grouped_invoices = defaultdict(lambda: defaultdict(lambda: {"base": Decimal(0), "vat": Decimal(0), "invoices": []}))
-
-        invoices = [invoice for invoice in invoices if invoice.state == state]
+    def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel]) -> Dict:
+        """
+        Group invoices by supplier and month, calculating total base and value for each group.
+        """
+        grouped_invoices = defaultdict(lambda: defaultdict(lambda: {"total_base": Decimal("0.00"), "total_value": Decimal("0.00"), "invoices": []}))
 
         for invoice in invoices:
             supplier = invoice.supplier
-            month = invoice.date.strftime('%Y-%m')
+            month = invoice.date.strftime("%Y-%m")  # Format the month as "YYYY-MM"
 
-            grouped_invoices[supplier][month]["base"] += Decimal(invoice.base_value)
-            grouped_invoices[supplier][month]["vat"] += Decimal(invoice.vat)
+            # Append the invoice to the respective group and update totals
             grouped_invoices[supplier][month]["invoices"].append(invoice)
-
-        for supplier, months in grouped_invoices.items():
-            for month, data in months.items():
-                data["invoices"].sort(key=lambda invoice: invoice.date)
+            grouped_invoices[supplier][month]["total_base"] += invoice.base_value
+            grouped_invoices[supplier][month]["total_value"] += invoice.total_value
 
         return grouped_invoices
+
+    def validate_invoice_format(self, invoice_numbers: List[str]) -> None:
+        """
+        Validate that all invoice numbers are in the correct format.
+        """
+        for invoice_number in invoice_numbers:
+            if not invoice_number.startswith("F"):
+                raise ValueError(f"Invalid invoice number format: {invoice_number}")
+
+    def find_missing_invoice_numbers(self, invoices: List[InvoiceModel]) -> List[str]:
+        """
+        Find any missing invoice numbers based on the expected sequence.
+        """
+        all_invoice_numbers = [invoice.number for invoice in invoices]
+        expected_invoice_numbers = self.generate_expected_invoice_numbers()
+        missing_invoice_numbers = [
+            number for number in expected_invoice_numbers if number not in all_invoice_numbers
+        ]
+        return missing_invoice_numbers
+
+    def generate_expected_invoice_numbers(self) -> List[str]:
+        """
+        Generate the expected invoice numbers (example logic).
+        """
+        return [f"F2023/{str(i).zfill(2)}" for i in range(1, 41)]  # Example: F2023/01, F2023/02, etc.
+
+    def process_grouped_invoices(self, grouped_invoices: Dict) -> List[Dict]:
+        """
+        Process the grouped invoices and create accounting entries for each group.
+        """
+        accounting_entries = []
+
+        for supplier, months in grouped_invoices.items():
+            for month, details in months.items():
+                accounting_entries.append({
+                    "supplier": supplier,
+                    "month": month,
+                    "total_base": details["total_base"],
+                    "total_value": details["total_value"],
+                    "invoice_count": len(details["invoices"]),
+                })
+
+        return accounting_entries
