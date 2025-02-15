@@ -5,7 +5,7 @@ from inmaticpart2.app.enums.invoice_states import InvoiceStates
 from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 
 
-class InvoiceServiceTest(TestCase):
+class AccountingInvoiceServiceTest(TestCase):
 
     def setUp(self):
         self.invoice1 = InvoiceModelFactory.build_invoice()
