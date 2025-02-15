@@ -8,7 +8,6 @@ from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 class InvoiceServiceTest(TestCase):
 
     def setUp(self):
-        # Create sample invoices using the factory
         self.invoice1 = InvoiceModelFactory.build_invoice()
         self.invoice2 = InvoiceModelFactory.build_invoice()
         self.invoice3 = InvoiceModelFactory.build_invoice()
@@ -42,7 +41,6 @@ class InvoiceServiceTest(TestCase):
         self.assertEqual(sorted_invoice_numbers, expected_result)
 
     def test_it_corrects_group_invoices_by_supplier_and_month(self):
-        # Ensure invoices have the correct 'provider' and 'state'
         self.invoice1.provider = "Telefónica"
         self.invoice2.provider = "Telefónica"
         self.invoice3.provider = "Telefónica"
@@ -51,40 +49,31 @@ class InvoiceServiceTest(TestCase):
         self.invoice2.state = InvoiceStates.DRAFT
         self.invoice3.state = InvoiceStates.DRAFT
 
-        # Now group by supplier and month
         invoice_processor = InvoiceProcessor()
         grouped_invoices = invoice_processor.group_invoices_by_supplier_and_month(
             [self.invoice1, self.invoice2, self.invoice3],
             InvoiceStates.DRAFT
         )
         
-        # Check that 'Telefónica' is in the grouped invoices
         self.assertIn("Telefónica", grouped_invoices)
 
     def test_it_raises_value_error_for_invalid_invoice_amount(self):
-            # Modify the invoices to have an invalid amount
-            self.invoice1.total_value = Decimal("-100.00")  # Invalid total value (negative)
-            
-            invoice_processor = InvoiceProcessor()
+        self.invoice1.total_value = Decimal("-100.00")
+        
+        invoice_processor = InvoiceProcessor()
 
-            # Test that the ValueError is raised when an invalid invoice amount is processed
-            with self.assertRaises(ValueError) as context:
-                invoice_processor.create_accounting_entries_for_invoices([self.invoice1])
+        with self.assertRaises(ValueError) as context:
+            invoice_processor.create_accounting_entries_for_invoices([self.invoice1])
 
-            # Ensure the error message is as expected
-            self.assertEqual(str(context.exception), f"Invoice {self.invoice1.number} with amount -100.00 is not valid.")
+        self.assertEqual(str(context.exception), f"Invoice {self.invoice1.number} with amount -100.00 is not valid.")
 
     def test_it_detects_duplicate_invoice_numbers(self):
-        # Manually set the same invoice number for two invoices to simulate a duplicate
-        self.invoice2.number = self.invoice1.number  # Make the number duplicate
         
-        invoices = [self.invoice1, self.invoice2, self.invoice3]
+        invoices = [self.invoice1, self.invoice1, self.invoice3]
 
         invoice_processor = InvoiceProcessor()
 
-        # Run the method that checks for duplicate invoice numbers
         duplicate_invoice_numbers = invoice_processor.detect_duplicate_invoice_numbers(invoices)
 
-        # Ensure that the duplicate invoice number is detected
         self.assertIn(self.invoice1.number, duplicate_invoice_numbers)
-        self.assertEqual(len(duplicate_invoice_numbers), 1)  # Only one duplicate should be detected
+        self.assertEqual(len(duplicate_invoice_numbers), 1)
