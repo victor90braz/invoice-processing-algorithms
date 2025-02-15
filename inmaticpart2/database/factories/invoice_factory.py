@@ -1,36 +1,27 @@
 import factory
 from decimal import Decimal
-from datetime import date
+from datetime import date as datetime_date
 from inmaticpart2.app.enums.invoice_states import InvoiceStates
 from inmaticpart2.models import InvoiceModel
+
 
 class InvoiceModelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = InvoiceModel
 
-    number = f"F2023/{1:02d}"
+    number = factory.Sequence(lambda n: f"F2023/{n + 1:02d}")
     supplier = "Telefónica"
     concept = "Sample concept for invoice."
     base_value = Decimal('100.00')
     vat = Decimal('21.00')
-    total_value = base_value + (base_value * vat / Decimal('100'))
-    date = date(2023, 1, 15)
+    total_value = factory.LazyAttribute(lambda o: o.base_value + (o.base_value * o.vat / Decimal('100')))
+    date = datetime_date(2023, 1, 15)
     state = InvoiceStates.DRAFT
 
     @classmethod
-    def build_invoice(cls):
-        invoice = cls.create(
-            supplier=cls.supplier,
-            concept=cls.concept,
-            base_value=cls.base_value,
-            vat=cls.vat,
-            total_value=cls.total_value,
-            date=cls.date,
-            state=cls.state
-        )
+    def build_invoice(cls, **kwargs):
+        if "date" in kwargs and isinstance(kwargs["date"], str):
+            kwargs["date"] = datetime_date.fromisoformat(kwargs["date"])
 
-        invoice.number = f"F2023/{invoice.pk:02d}"
-
-        invoice.save()
-
+        invoice = cls.build(**kwargs)
         return invoice
