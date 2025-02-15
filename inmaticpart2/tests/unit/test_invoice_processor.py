@@ -54,8 +54,27 @@ class InvoiceServiceTest(TestCase):
             [self.invoice1, self.invoice2, self.invoice3],
             InvoiceStates.DRAFT
         )
-        
+
         self.assertIn("Telefónica", grouped_invoices)
+
+        grouped_invoice_data = grouped_invoices["Telefónica"]
+        
+        for month, data in grouped_invoice_data.items():
+
+            grouped_invoice_numbers = [invoice.number for invoice in data["invoices"]]
+            expected_invoice_numbers = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
+            self.assertEqual(sorted(grouped_invoice_numbers), sorted(expected_invoice_numbers))
+            
+            self.assertEqual(len(data["invoices"]), 3)
+
+            for invoice in data["invoices"]:
+                self.assertEqual(invoice.state, InvoiceStates.DRAFT)
+
+            self.assertNotIn("OtherSupplier", grouped_invoices)
+
+            first_invoice_date = data["invoices"][0].date
+            for invoice in data["invoices"]:
+                self.assertEqual(invoice.date, first_invoice_date)
 
     def test_it_raises_value_error_for_invalid_invoice_amount(self):
         self.invoice1.total_value = Decimal("-100.00")
