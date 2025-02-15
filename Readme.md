@@ -57,12 +57,11 @@ python manage.py test inmaticpart2.tests
 
 ---
 
-## Running a Specific Test Method
+## Running a Specific Test 
 
-To run a specific test method from a test case, use this format:
 
 ```bash
-python manage.py test inmaticpart2.tests.unit.test_invoice_processor
+coverage run manage.py test inmaticpart2.tests.unit.service.test_accounting_invoice_service
 ```
 
 ---

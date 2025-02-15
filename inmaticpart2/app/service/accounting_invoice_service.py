@@ -9,7 +9,7 @@ from inmaticpart2.models import InvoiceModel
 import re
 
 
-class InvoiceProcessor:
+class AccountingInvoiceService:
 
     def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
         self.validate_invoice_format([invoice.number for invoice in invoices])
@@ -98,7 +98,7 @@ class InvoiceProcessor:
         invoices = [invoice for invoice in invoices if invoice.state == state]
 
         for invoice in invoices:
-            supplier = invoice.provider
+            supplier = invoice.supplier
             month = invoice.date.strftime('%Y-%m')
 
             grouped_invoices[supplier][month]["base"] += Decimal(invoice.base_value)
