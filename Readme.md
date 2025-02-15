@@ -61,7 +61,7 @@ python manage.py test inmaticpart2.tests
 
 
 ```bash
-coverage run manage.py test inmaticpart2.tests.unit.service.test_accounting_invoice_service
+coverage run manage.py test inmaticpart2.tests.unit.service.accounting_invoice_service_test
 ```
 
 ---
