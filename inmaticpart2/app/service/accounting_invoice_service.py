@@ -9,7 +9,7 @@ from inmaticpart2.models import InvoiceModel
 import re
 
 
-class InvoiceProcessor:
+class AccountingInvoiceService:
 
     def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
         self.validate_invoice_format([invoice.number for invoice in invoices])

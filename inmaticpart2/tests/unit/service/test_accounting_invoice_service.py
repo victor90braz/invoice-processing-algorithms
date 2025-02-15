@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.test import TestCase
-from inmaticpart2.app.service.invoice_processor import InvoiceProcessor
+from inmaticpart2.app.service.accounting_invoice_service import AccountingInvoiceService
 from inmaticpart2.app.enums.invoice_states import InvoiceStates
 from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 
@@ -14,7 +14,7 @@ class InvoiceServiceTest(TestCase):
 
     def test_it_corrects_check_for_missing_invoice_numbers(self):
         invoices = [self.invoice1, self.invoice2, self.invoice3]
-        actual_result = InvoiceProcessor().create_accounting_entries(invoices)
+        actual_result = AccountingInvoiceService().create_accounting_entries(invoices)
 
         self.assertIn("F2023/04", actual_result["missing_invoice_numbers"])
         self.assertEqual(len(actual_result["missing_invoice_numbers"]), 39)
@@ -25,7 +25,7 @@ class InvoiceServiceTest(TestCase):
 
     def test_it_corrects_validate_invoice_number_format(self):
         valid_invoice_numbers = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
-        invoiceProcessor = InvoiceProcessor()
+        invoiceProcessor = AccountingInvoiceService()
 
         invoiceProcessor.validate_invoice_format(valid_invoice_numbers)
 
@@ -34,7 +34,7 @@ class InvoiceServiceTest(TestCase):
 
     def test_it_corrects_sort_invoices_by_date(self):
         invoices = [self.invoice1, self.invoice2, self.invoice3]
-        sorted_result = InvoiceProcessor().sort_invoices_by_date(invoices)
+        sorted_result = AccountingInvoiceService().sort_invoices_by_date(invoices)
 
         sorted_invoice_numbers = [invoice.number for invoice in sorted_result]
         expected_result = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
@@ -49,7 +49,7 @@ class InvoiceServiceTest(TestCase):
         self.invoice2.state = InvoiceStates.DRAFT
         self.invoice3.state = InvoiceStates.DRAFT
 
-        invoice_processor = InvoiceProcessor()
+        invoice_processor = AccountingInvoiceService()
         grouped_invoices = invoice_processor.group_invoices_by_supplier_and_month(
             [self.invoice1, self.invoice2, self.invoice3],
             InvoiceStates.DRAFT
@@ -79,7 +79,7 @@ class InvoiceServiceTest(TestCase):
     def test_it_raises_value_error_for_invalid_invoice_amount(self):
         self.invoice1.total_value = Decimal("-100.00")
         
-        invoice_processor = InvoiceProcessor()
+        invoice_processor = AccountingInvoiceService()
 
         with self.assertRaises(ValueError) as context:
             invoice_processor.create_accounting_entries_for_invoices([self.invoice1])
@@ -90,7 +90,7 @@ class InvoiceServiceTest(TestCase):
         
         invoices = [self.invoice1, self.invoice1, self.invoice3]
 
-        invoice_processor = InvoiceProcessor()
+        invoice_processor = AccountingInvoiceService()
 
         duplicate_invoice_numbers = invoice_processor.detect_duplicate_invoice_numbers(invoices)
 
