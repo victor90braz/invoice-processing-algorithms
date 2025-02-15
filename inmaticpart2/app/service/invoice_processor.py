@@ -12,7 +12,6 @@ import re
 class InvoiceProcessor:
 
     def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
-
         self.validate_invoice_format([invoice.number for invoice in invoices])
 
         sorted_invoices = self.sort_invoices_by_date(invoices)

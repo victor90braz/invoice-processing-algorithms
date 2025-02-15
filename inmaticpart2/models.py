@@ -12,11 +12,18 @@ class InvoiceModel(models.Model):
     date = models.DateField()
     state = models.CharField(max_length=50)
 
-
     def clean(self):
         super().clean()  
         errors = {}
 
+        # Validate mandatory fields
+        if not self.number or self.number == "UNKNOWN":
+            errors["number"] = "Invoice number is required."
+
+        if not self.provider:
+            errors["provider"] = "Provider is required."
+
+        # Validate other fields
         if self.base_value <= 0:
             errors["base_value"] = "Base value must be greater than zero."
 
