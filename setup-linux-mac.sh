@@ -25,7 +25,7 @@ if [ -n "$projectName" ]; then
         echo "django-admin command not found. Please ensure Django is installed properly."
         exit 1
     fi
-    django-admin startproject $projectName .
+    django-admin startproject "$projectName" .
     echo "New Django project '$projectName' created."
 else
     echo "Skipping project creation. Make sure the project is already set up."
@@ -38,7 +38,24 @@ pip freeze > requirements.txt
 echo "Running migrations..."
 python3 manage.py migrate
 
-# Step 9: Run the Django development server
+# Step 9: Create .gitignore file to ignore .env
+echo ".env" > .gitignore
+echo ".gitignore file created to ignore .env"
+
+# Step 10: Create .env-example file with example values
+cat <<EOL > .env-example
+DB_NAME=inmaticpart2
+DB_USER=root
+DB_PASSWORD=root
+DB_HOST=127.0.0.1
+DB_PORT=3306
+SECRET_KEY=your-secret-key
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
+EOL
+echo ".env-example file created with example values."
+
+# Step 11: Run the Django development server
 if [ -f "manage.py" ]; then
     echo "Running the Django development server..."
     python3 manage.py runserver
