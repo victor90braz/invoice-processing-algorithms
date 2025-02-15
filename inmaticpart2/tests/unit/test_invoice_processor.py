@@ -44,9 +44,7 @@ class InvoiceServiceTest(TestCase):
             | invoice.generate_state(InvoiceStates.CANCELED))
         )
 
-
-    def test_missing_invoice_number(self):
-        # Testing that the "missing_invoice_numbers" functionality works.
+    def test_it_corrects_check_for_missing_invoice_numbers(self):
         invoices = [self.invoice1, self.invoice2, self.invoice3]
         actual_result = InvoiceProcessor().create_accounting_entries(invoices)
 
@@ -57,8 +55,7 @@ class InvoiceServiceTest(TestCase):
             ["F2023/04", "F2023/05", "F2023/06", "F2023/07", "F2023/08"]
         )
 
-    def test_invoice_number_format(self):
-        # Testing the validation of invoice number formats.
+    def test_it_corrects_validate_invoice_number_format(self):
         valid_invoice_numbers = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
         invoiceProcessor = InvoiceProcessor()
 
@@ -67,8 +64,7 @@ class InvoiceServiceTest(TestCase):
         with self.assertRaises(ValueError):
             invoiceProcessor.validate_invoice_format(["F2023/01", "2023-02-03", "F2023/03"])
 
-    def test_sort_invoices_by_date(self):
-        # Testing that invoices are sorted by date correctly.
+    def test_it_corrects_sort_invoices_by_date(self):
         invoices = [self.invoice1, self.invoice2, self.invoice3]
         sorted_result = InvoiceProcessor().sort_invoices_by_date(invoices)
 
@@ -76,17 +72,11 @@ class InvoiceServiceTest(TestCase):
         expected_result = [self.invoice1.number, self.invoice2.number, self.invoice3.number]
         self.assertEqual(sorted_invoice_numbers, expected_result)
 
-    def test_group_invoices_by_supplier_and_month(self):
-        # Testing grouping of invoices by supplier and month.
+    def test_it_corrects_group_invoices_by_supplier_and_month(self):
         invoices = [self.invoice1, self.invoice2, self.invoice3]
         transition_result = InvoiceProcessor().group_invoices_by_supplier_and_month(invoices, InvoiceStates.PAID)
 
-        # Ensure the "Telefónica" provider is in the results.
         self.assertIn("Telefónica", transition_result)
-
-        # Check if invoices are grouped by month (2023-01 in this case).
         self.assertIn("2023-01", transition_result["Telefónica"])
-
-        # Verify the base and VAT amounts for the group.
         self.assertEqual(transition_result["Telefónica"]["2023-01"]["base"], Decimal("200.00"))
         self.assertEqual(transition_result["Telefónica"]["2023-01"]["vat"], Decimal("42.00"))
