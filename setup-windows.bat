@@ -127,7 +127,7 @@ if not exist .env-example (
 echo.
 echo =============================================
 echo               SETUP COMPLETE
-echo                GOOD CODING!
+echo                HAPPY CODING!
 echo =============================================
 
 :: Step 12: Run the Django server
