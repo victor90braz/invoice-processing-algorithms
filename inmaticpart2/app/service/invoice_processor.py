@@ -1,8 +1,10 @@
+from collections import defaultdict
 from typing import List, Dict
 from decimal import Decimal
 from inmaticpart2.app.enums.accounting_codes import AccountingCodes
+from inmaticpart2.app.enums.invoice_states import InvoiceStates
 from inmaticpart2.app.enums.payment_type import PaymentType
-from inmaticpart2.app.enums.accounting_entry import AccountingEntry
+from inmaticpart2.app.dtos.accounting_entry import AccountingEntry
 from inmaticpart2.models import InvoiceModel
 import re
 
@@ -10,7 +12,6 @@ import re
 class InvoiceProcessor:
 
     def create_accounting_entries(self, invoices: List[InvoiceModel]) -> Dict:
-
         self.validate_invoice_format([invoice.number for invoice in invoices])
 
         sorted_invoices = self.sort_invoices_by_date(invoices)
@@ -89,3 +90,23 @@ class InvoiceProcessor:
 
     def is_valid(self, amount: float) -> bool:
         return amount > 0
+
+    def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel], state: InvoiceStates) -> Dict:
+        
+        grouped_invoices = defaultdict(lambda: defaultdict(lambda: {"base": Decimal(0), "vat": Decimal(0), "invoices": []}))
+
+        invoices = [invoice for invoice in invoices if invoice.state == state]
+
+        for invoice in invoices:
+            supplier = invoice.provider
+            month = invoice.date.strftime('%Y-%m')
+
+            grouped_invoices[supplier][month]["base"] += Decimal(invoice.base_value)
+            grouped_invoices[supplier][month]["vat"] += Decimal(invoice.vat)
+            grouped_invoices[supplier][month]["invoices"].append(invoice)
+
+        for supplier, months in grouped_invoices.items():
+            for month, data in months.items():
+                data["invoices"].sort(key=lambda invoice: invoice.date)
+
+        return grouped_invoices
