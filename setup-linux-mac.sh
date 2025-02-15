@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the project name
-PROJECT_NAME="myproject"
+PROJECT_NAME="my_django_project"
 
 # Step 1: Ensure Python is installed
 echo "[1/12] Ensuring Python is installed..."
@@ -20,6 +20,8 @@ if ! command -v pip3 &>/dev/null; then
     if [ $? -ne 0 ]; then
         echo "[ERROR] Failed to install pip!"
         exit 1
+    else
+        echo "[SUCCESS] pip installed."
     fi
 else
     echo "[SUCCESS] pip is installed."
@@ -27,7 +29,7 @@ fi
 
 # Step 3: Create a virtual environment
 echo "[3/12] Creating a virtual environment..."
-python3 -m venv myenv
+python3 -m venv venv
 if [ $? -ne 0 ]; then
     echo "[ERROR] Failed to create virtual environment!"
     exit 1
@@ -37,7 +39,7 @@ fi
 
 # Step 4: Activate the virtual environment
 echo "[4/12] Activating the virtual environment..."
-source myenv/bin/activate
+source venv/bin/activate
 if [ $? -ne 0 ]; then
     echo "[ERROR] Activation failed!"
     exit 1
@@ -55,9 +57,9 @@ else
     echo "[SUCCESS] pip upgraded!"
 fi
 
-# Step 6: Install Django
-echo "[6/12] Installing Django..."
-pip install django > /dev/null
+# Step 6: Install Django and required dependencies
+echo "[6/12] Installing Django and required dependencies..."
+pip install django cryptography > /dev/null
 if [ $? -ne 0 ]; then
     echo "[ERROR] Django installation failed!"
     exit 1
@@ -95,7 +97,7 @@ else
     echo "[SUCCESS] Migrations applied!"
 fi
 
-# Step 10: Create .gitignore if it doesn't exist
+# Step 10: Create .gitignore if it doesn’t exist
 if [ ! -f .gitignore ]; then
     echo "[10/12] Creating .gitignore..."
     echo ".env" > .gitignore
@@ -104,7 +106,7 @@ else
     echo "[INFO] .gitignore already exists. Skipping."
 fi
 
-# Step 11: Create .env-example if it doesn't exist
+# Step 11: Create .env-example if it doesn’t exist
 if [ ! -f .env-example ]; then
     echo "[11/12] Creating .env-example..."
     cat <<EOL > .env-example
