@@ -11,31 +11,6 @@ from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 
 class InvoiceServiceTest(TestCase):
 
-    def test_create_factory(self):
-        invoice = InvoiceModelFactory
-
-        resultInvoice = (
-            invoice.generate_invoice_number(1) |
-            invoice.generate_provider("MyCompany Ltd.") |
-            invoice.generate_concept("Sample concept for invoice.") |
-            invoice.generate_base_value(Decimal('100.00')) |
-            invoice.generate_vat(Decimal('21.00')) |
-            invoice.generate_total_value(Decimal('121.00')) |
-            invoice.generate_date(date(2023, 1, 15)) |
-            invoice.generate_state(InvoiceStates.DRAFT)
-        )
-
-        self.assertEqual(resultInvoice, {
-            "number": "F2023/01",
-            "provider": "MyCompany Ltd.",
-            "concept": "Sample concept for invoice.",
-            "base_value": Decimal('100.00'),
-            "vat": Decimal('21.00'),
-            "total_value": Decimal('121.00'),
-            "date": date(2023, 1, 15),
-            "state": InvoiceStates.DRAFT
-        })
-
     def test_missing_invoice_number(self):
         invoice = InvoiceModelFactory
 

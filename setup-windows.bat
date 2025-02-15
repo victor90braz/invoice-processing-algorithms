@@ -11,7 +11,10 @@ python -m pip install --upgrade pip
 :: Step 4: Install Django (or any other dependencies)
 pip install django
 
-:: Step 5: Prompt for project name and create the project if needed
+:: Step 5: Install cryptography
+pip install cryptography
+
+:: Step 6: Prompt for project name and create the project if needed
 echo Enter the name of your Django project (leave blank to skip creation):
 set /p projectName=
 
@@ -29,14 +32,14 @@ if not "%projectName%"=="" (
     echo Skipping project creation. Make sure the project is already set up.
 )
 
-:: Step 6: Generate requirements.txt
+:: Step 7: Generate requirements.txt
 pip freeze > requirements.txt
 
-:: Step 7: Run migrations to apply any unapplied migrations
+:: Step 8: Run migrations to apply any unapplied migrations
 echo Running migrations...
 python manage.py migrate
 
-:: Step 8: Run the Django development server
+:: Step 9: Run the Django development server
 echo Checking for manage.py...
 if exist manage.py (
     echo Running the Django development server...
