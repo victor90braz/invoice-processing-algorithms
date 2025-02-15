@@ -9,34 +9,26 @@ class InvoiceModelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = InvoiceModel
 
-    number = factory.Sequence(lambda n: f"F2023/{n + 1:02d}")  # Auto-generate unique numbers
+    # Auto-generate unique invoice numbers
+    number = factory.Sequence(lambda n: f"F2023/{n + 1:02d}")
     supplier = "Telefónica"
     concept = "Sample concept for invoice."
     base_value = Decimal('100.00')
     vat = Decimal('21.00')
-    total_value = base_value + (base_value * vat / Decimal('100'))
-    date = datetime_date(2023, 1, 15)  # Use datetime_date here
+    total_value = factory.LazyAttribute(lambda o: o.base_value + (o.base_value * o.vat / Decimal('100')))
+    date = datetime_date(2023, 1, 15)
     state = InvoiceStates.DRAFT
 
     @classmethod
-    def build_invoice(cls, supplier=None, date=None):
+    def build_invoice(cls, **kwargs):
         """
-        Build and return an InvoiceModel instance.
-        :param supplier: Optional supplier name.
-        :param date: Optional invoice date.
+        Build and return an InvoiceModel instance without saving it to the database.
+        :param kwargs: Optional fields to override (e.g., number, supplier, date, etc.).
         """
         # Ensure date is a datetime.date object, not a string
-        invoice_date = date or cls.date
-        if isinstance(invoice_date, str):
-            invoice_date = datetime_date.fromisoformat(invoice_date)
+        if "date" in kwargs and isinstance(kwargs["date"], str):
+            kwargs["date"] = datetime_date.fromisoformat(kwargs["date"])
 
-        invoice = cls.create(
-            supplier=supplier or cls.supplier,
-            concept=cls.concept,
-            base_value=cls.base_value,
-            vat=cls.vat,
-            total_value=cls.total_value,
-            date=invoice_date,
-            state=cls.state
-        )
+        # Build the invoice instance with provided or default values
+        invoice = cls.build(**kwargs)
         return invoice
