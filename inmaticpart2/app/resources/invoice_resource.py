@@ -8,8 +8,4 @@ class InvoiceResource:
         self.accounting_service = accounting_service
 
     def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel]) -> Dict:
-        """
-        Calls the AccountingInvoiceService to get grouped invoices and accounting entries.
-        """
         return self.accounting_service.group_invoices_by_supplier_and_month(invoices)
-
