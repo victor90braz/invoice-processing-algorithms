@@ -98,7 +98,7 @@ class InvoiceProcessor:
         invoices = [invoice for invoice in invoices if invoice.state == state]
 
         for invoice in invoices:
-            supplier = invoice.provider
+            supplier = invoice.supplier
             month = invoice.date.strftime('%Y-%m')
 
             grouped_invoices[supplier][month]["base"] += Decimal(invoice.base_value)

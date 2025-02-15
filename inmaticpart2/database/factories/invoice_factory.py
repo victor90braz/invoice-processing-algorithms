@@ -9,7 +9,7 @@ class InvoiceModelFactory(factory.django.DjangoModelFactory):
         model = InvoiceModel
 
     number = f"F2023/{1:02d}"
-    provider = "Telefónica"
+    supplier = "Telefónica"
     concept = "Sample concept for invoice."
     base_value = Decimal('100.00')
     vat = Decimal('21.00')
@@ -20,7 +20,7 @@ class InvoiceModelFactory(factory.django.DjangoModelFactory):
     @classmethod
     def build_invoice(cls):
         invoice = cls.create(
-            provider=cls.provider,
+            supplier=cls.supplier,
             concept=cls.concept,
             base_value=cls.base_value,
             vat=cls.vat,
