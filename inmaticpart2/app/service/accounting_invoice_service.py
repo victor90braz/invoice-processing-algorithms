@@ -1,5 +1,5 @@
 from typing import List, Dict
-from datetime import datetime
+from datetime import date as datetime_date, datetime
 from decimal import Decimal
 from collections import defaultdict
 from inmaticpart2.database.builder.invoice_builder import InvoiceBuilder
@@ -13,8 +13,8 @@ class AccountingInvoiceService:
     def create_accounting_entries(
         self,
         invoices: List[InvoiceModel],
-        start_date: datetime = None,
-        end_date: datetime = None,
+        start_date: datetime_date = None,
+        end_date: datetime_date = None,
         supplier_id: int = None
     ) -> Dict:
         for invoice in invoices:
@@ -88,3 +88,33 @@ class AccountingInvoiceService:
                 })
 
         return accounting_entries
+    
+    def cashflow_projection(start_date: datetime, end_date: datetime, invoices: List[InvoiceModel]):
+        builder = InvoiceBuilder()
+        builder.filter_by_date_range(start_date, end_date)
+        filtered_invoices = builder.apply_filters(invoices)
+        sorted_invoices = builder.sort_invoices_by_date(filtered_invoices)
+
+        weekly_cashflow = {}
+        monthly_cashflow = {}
+        total_balance = Decimal('0.00')
+
+        for invoice in sorted_invoices:
+            week = invoice.date.strftime("%Y-%U")
+            month = invoice.date.strftime("%Y-%m")
+
+            if week not in weekly_cashflow:
+                weekly_cashflow[week] = Decimal('0.00')
+            weekly_cashflow[week] += invoice.total_value
+
+            if month not in monthly_cashflow:
+                monthly_cashflow[month] = Decimal('0.00')
+            monthly_cashflow[month] += invoice.total_value
+
+            total_balance += invoice.total_value
+
+        return {
+            "total_balance": total_balance,
+            "weekly_cashflow": weekly_cashflow,
+            "monthly_cashflow": monthly_cashflow,
+        }

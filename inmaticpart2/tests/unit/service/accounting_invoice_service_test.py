@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import datetime
+from datetime import date, datetime
 from unittest.mock import patch
 from django.test import TestCase
 from inmaticpart2.app.service.accounting_invoice_service import AccountingInvoiceService
@@ -166,3 +166,33 @@ class AccountingInvoiceServiceTest(TestCase):
 
         self.assertEqual(grouped_invoices["Vodafone"][self.invoice4.date.strftime('%Y-%m')]["total_base"], self.invoice4.base_value)
         self.assertEqual(grouped_invoices["Vodafone"][self.invoice4.date.strftime('%Y-%m')]["total_value"], self.invoice4.total_value)
+
+
+    def test_it_correctly_calculates_cashflow_projection(self):
+        # Arrange
+        start_date = date(2023, 1, 1)
+        end_date = date(2023, 1, 31)
+
+        invoice1 = InvoiceModelFactory.build_invoice(number="F2023/01", date=date(2023, 1, 10), total_value=Decimal("200.00"))
+        invoice2 = InvoiceModelFactory.build_invoice(number="F2023/02", date=date(2023, 1, 20), total_value=Decimal("150.00"))
+        invoice3 = InvoiceModelFactory.build_invoice(number="F2023/03", date=date(2023, 1, 25), total_value=Decimal("250.00"))
+
+        invoices = [invoice1, invoice2, invoice3]
+
+        # Act
+        result = AccountingInvoiceService.cashflow_projection(start_date, end_date, invoices)
+
+        # Assert
+        expected_total_balance = Decimal("600.00")
+        expected_weekly_cashflow = {
+            "2023-02": Decimal("200.00"),  
+            "2023-03": Decimal("150.00"), 
+            "2023-04": Decimal("250.00"),  
+        }
+        expected_monthly_cashflow = {
+            "2023-01": Decimal("600.00"),  
+        }
+
+        self.assertEqual(result["total_balance"], expected_total_balance)
+        self.assertDictEqual(result["weekly_cashflow"], expected_weekly_cashflow)
+        self.assertDictEqual(result["monthly_cashflow"], expected_monthly_cashflow)
