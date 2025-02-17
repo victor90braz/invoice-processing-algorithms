@@ -5,7 +5,6 @@ from inmaticpart2.app.dtos.accounting_entry import AccountingEntry
 from inmaticpart2.app.enums.accounting_codes import AccountingCodes
 from inmaticpart2.app.enums.payment_type import PaymentType
 from inmaticpart2.database.builder.invoice_builder import InvoiceBuilder
-from inmaticpart2.database.factories.invoice_factory import InvoiceModelFactory
 
 
 class AccountingInvoiceService:
