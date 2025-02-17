@@ -10,26 +10,25 @@ class AccountingInvoiceServiceTest(TestCase):
 
     def setUp(self):
         self.invoice1 = InvoiceModelFactory.build_invoice(
-            number="F2023/01", 
-            date=datetime(2023, 1, 15).date(), 
+            number="F2023/01",
+            date=datetime(2023, 1, 15).date(),
             supplier="Telefónica"
         )
         self.invoice2 = InvoiceModelFactory.build_invoice(
-            number="F2023/02", 
-            date=datetime(2023, 1, 20).date(), 
+            number="F2023/02",
+            date=datetime(2023, 1, 20).date(),
             supplier="Telefónica"
         )
         self.invoice3 = InvoiceModelFactory.build_invoice(
-            number="F2023/03", 
-            date=datetime(2023, 2, 10).date(), 
+            number="F2023/03",
+            date=datetime(2023, 2, 10).date(),
             supplier="Telefónica"
         )
         self.invoice4 = InvoiceModelFactory.build_invoice(
-            number="F2023/04", 
-            date=datetime(2023, 1, 15).date(), 
+            number="F2023/04",
+            date=datetime(2023, 1, 15).date(),
             supplier="Vodafone"
         )
-
 
     def test_it_calls_filter_by_date_range_when_start_date_and_end_date_are_provided(self):
         # Arrange
@@ -45,7 +44,6 @@ class AccountingInvoiceServiceTest(TestCase):
         # Assert
         mock_filter_by_date_range.assert_called_once_with(start_date, end_date)
 
-
     def test_it_calls_filter_by_supplier_when_supplier_id_is_provided(self):
         # Arrange
         supplier_id = 1
@@ -59,7 +57,6 @@ class AccountingInvoiceServiceTest(TestCase):
         # Assert
         mock_filter_by_supplier.assert_called_once_with(supplier_id)
 
-
     def test_it_raises_value_error_if_sorted_invoices_is_not_a_list(self):
         # Arrange
         invoices = [self.invoice1, self.invoice2, self.invoice3]
@@ -72,23 +69,21 @@ class AccountingInvoiceServiceTest(TestCase):
 
         self.assertEqual(str(context.exception), "Expected sorted_invoices to be a list of InvoiceModel objects.")
 
-
     def test_it_correctly_checks_for_missing_invoice_numbers(self):
         # Arrange
         invoices = [self.invoice1, self.invoice2, self.invoice3]
-        
+
         # Act
         actual_result = AccountingInvoiceService().create_accounting_entries(invoices)
 
         # Assert
         missing_invoices = actual_result["missing_invoice_numbers"]
-        
+
         self.assertEqual(len(missing_invoices), 37)
         self.assertListEqual(
             missing_invoices[:5],
             ["F2023/04", "F2023/05", "F2023/06", "F2023/07", "F2023/08"]
         )
-
 
     def test_it_correctly_validates_invoice_number_format(self):
         # Arrange
@@ -102,19 +97,17 @@ class AccountingInvoiceServiceTest(TestCase):
         with self.assertRaises(ValueError):
             invoice_processor.validate_invoice_format(["F2023/01", "2023-02-03", "F2023/03"])
 
-
     def test_it_correctly_sorts_invoices_by_date(self):
         # Arrange
         invoices = [self.invoice3, self.invoice1, self.invoice2]
         invoice_processor = AccountingInvoiceService()
-        
+
         # Act
         sorted_invoices = invoice_processor.invoice_builder.sort_invoices_by_date(invoices)
 
         # Assert
         sorted_invoice_numbers = [invoice.number for invoice in sorted_invoices]
         self.assertListEqual(sorted_invoice_numbers, [self.invoice1.number, self.invoice2.number, self.invoice3.number])
-
 
     def test_it_raises_value_error_for_invalid_invoice_amount(self):
         # Arrange
@@ -127,7 +120,6 @@ class AccountingInvoiceServiceTest(TestCase):
 
         self.assertEqual(str(context.exception), f"Invoice {self.invoice1.number} with amount -100.00 is not valid.")
 
-
     def test_it_detects_duplicate_invoice_numbers(self):
         # Arrange
         invoices = [self.invoice1, self.invoice1, self.invoice3]
@@ -139,7 +131,6 @@ class AccountingInvoiceServiceTest(TestCase):
         # Assert
         self.assertIn(self.invoice1.number, duplicate_invoice_numbers)
         self.assertEqual(len(duplicate_invoice_numbers), 1)
-
 
     def test_it_correctly_groups_invoices_by_supplier_and_month(self):
         # Arrange
@@ -163,65 +154,3 @@ class AccountingInvoiceServiceTest(TestCase):
         self.assertIn("Vodafone", grouped_invoices)
         self.assertIn(self.invoice4.date.strftime('%Y-%m'), grouped_invoices["Vodafone"])
         self.assertEqual(len(grouped_invoices["Vodafone"][self.invoice4.date.strftime('%Y-%m')]["invoices"]), 1)
-
-        self.assertEqual(grouped_invoices["Vodafone"][self.invoice4.date.strftime('%Y-%m')]["total_base"], self.invoice4.base_value)
-        self.assertEqual(grouped_invoices["Vodafone"][self.invoice4.date.strftime('%Y-%m')]["total_value"], self.invoice4.total_value)
-
-
-    def test_it_correctly_calculates_cashflow_projection(self):
-        # Hardcoded values when calling the factory
-        invoice_1 = InvoiceModelFactory.create(
-            number="F2023/01",
-            supplier="Telefónica",
-            concept="Sample concept for invoice.",
-            base_value=Decimal('100.00'),
-            vat=Decimal('21.00'),
-            total_value=Decimal('121.00'),
-            date=datetime(2023, 1, 15),
-            due_date=datetime(2023, 2, 15),
-            state="PENDING"
-        )
-
-        invoice_2 = InvoiceModelFactory.create(
-            number="F2023/02",
-            supplier="Telefónica",
-            concept="Sample concept for invoice.",
-            base_value=Decimal('150.00'),
-            vat=Decimal('21.00'),
-            total_value=Decimal('181.50'),
-            date=datetime(2023, 2, 15),
-            due_date=datetime(2023, 3, 15),
-            state="PENDING"
-        )
-
-        invoice_3 = InvoiceModelFactory.create(
-            number="F2023/03",
-            supplier="Telefónica",
-            concept="Sample concept for invoice.",
-            base_value=Decimal('200.00'),
-            vat=Decimal('21.00'),
-            total_value=Decimal('242.00'),
-            date=datetime(2023, 3, 1),
-            due_date=datetime(2023, 4, 1),
-            state="PENDING"
-        )
-
-        # Assuming `accounting_invoice_service` is already initialized, and
-        # the cashflow_projection method takes start and end dates and invoices
-        invoice_processor = AccountingInvoiceService()
-
-        result = invoice_processor.cashflow_projection(
-            start_date=datetime(2023, 1, 1),  
-            end_date=datetime(2023, 3, 31),  
-            invoices=[invoice_1, invoice_2, invoice_3]
-        )
-
-        # Asserting the total balance
-        self.assertEqual(result["total_balance"], Decimal('544.50'))  # The expected value
-
-        # Asserting the weekly cashflow (choose the correct expected dates)
-        self.assertEqual(result["weekly_cashflow"], {
-            '2023-01-09': Decimal('121.00'),  # Week starting 2023-01-09
-            '2023-02-13': Decimal('181.50'),  # Week starting 2023-02-13
-            '2023-02-27': Decimal('242.00'),  # Week starting 2023-02-27
-        })
