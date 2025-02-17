@@ -5,6 +5,8 @@ from inmaticpart2.app.dtos.accounting_entry import AccountingEntry
 from inmaticpart2.app.enums.accounting_codes import AccountingCodes
 from inmaticpart2.app.enums.payment_type import PaymentType
 from inmaticpart2.database.builder.invoice_builder import InvoiceBuilder
+from inmaticpart2.models import InvoiceModel
+from typing import List
 
 
 class AccountingInvoiceService:
@@ -13,7 +15,7 @@ class AccountingInvoiceService:
 
     def create_accounting_entries(
         self,
-        invoices,
+        invoices: List[InvoiceModel],
         start_date: datetime = None,
         end_date: datetime = None,
         supplier_id: int = None
@@ -48,7 +50,7 @@ class AccountingInvoiceService:
             "accounting_entries": accounting_entries,
         }
 
-    def group_invoices_by_supplier_and_month(self, invoices) -> dict:
+    def group_invoices_by_supplier_and_month(self, invoices: List[InvoiceModel]) -> dict:
         grouped_invoices = defaultdict(lambda: defaultdict(lambda: {"total_base": Decimal("0.00"), "total_value": Decimal("0.00"), "invoices": []}))
 
         for invoice in invoices:
@@ -61,7 +63,7 @@ class AccountingInvoiceService:
 
         return grouped_invoices
 
-    def process_grouped_invoices(self, grouped_invoices, account_code=None, debit_credit=None) -> list:
+    def process_grouped_invoices(self, grouped_invoices: dict, account_code=None, debit_credit=None) -> list:
         accounting_entries = []
 
         account_code = account_code or AccountingCodes.PURCHASES
@@ -69,7 +71,6 @@ class AccountingInvoiceService:
 
         for supplier, months in grouped_invoices.items():
             for month, details in months.items():
-                
                 for invoice in details["invoices"]:
                     accounting_entries.append(AccountingEntry(
                         account_code=account_code,  
@@ -81,13 +82,12 @@ class AccountingInvoiceService:
 
         return accounting_entries
 
-
-    def validate_invoice_format(self, invoice_numbers) -> None:
+    def validate_invoice_format(self, invoice_numbers: List[str]) -> None:
         for invoice_number in invoice_numbers:
             if not invoice_number.startswith("F"):
                 raise ValueError(f"Invalid invoice number format: {invoice_number}")
 
-    def find_missing_invoice_numbers(self, invoices) -> list:
+    def find_missing_invoice_numbers(self, invoices: List[InvoiceModel]) -> list:
         all_invoice_numbers = [invoice.number for invoice in invoices]
         expected_invoice_numbers = self.generate_expected_invoice_numbers()
         return [number for number in expected_invoice_numbers if number not in all_invoice_numbers]
@@ -95,7 +95,7 @@ class AccountingInvoiceService:
     def generate_expected_invoice_numbers(self) -> list:
         return [f"F2023/{str(i).zfill(2)}" for i in range(1, 41)]
 
-    def cashflow_projection(self, start_date: datetime, end_date: datetime, invoices) -> dict:
+    def cashflow_projection(self, start_date: datetime, end_date: datetime, invoices: List[InvoiceModel]) -> dict:
         filtered_invoices = [
             invoice for invoice in invoices
             if start_date <= invoice.date <= end_date
