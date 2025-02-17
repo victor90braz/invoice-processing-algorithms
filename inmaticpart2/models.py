@@ -9,18 +9,19 @@ class InvoiceModel(models.Model):
     base_value = models.DecimalField(max_digits=10, decimal_places=2)
     vat = models.DecimalField(max_digits=10, decimal_places=2)
     total_value = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField()
+    date = models.DateField()         
+    due_date = models.DateField()     
     state = models.CharField(max_length=50)
 
     def clean(self):
-        super().clean()  
+        super().clean()
         errors = {}
 
         if not self.number or self.number == "UNKNOWN":
             errors["number"] = "Invoice number is required."
 
-        if not self.supplier:  
-            errors["supplier"] = "Supplier is required." 
+        if not self.supplier:
+            errors["supplier"] = "Supplier is required."
 
         if self.base_value <= 0:
             errors["base_value"] = "Base value must be greater than zero."
@@ -38,9 +39,11 @@ class InvoiceModel(models.Model):
         if self.date > date.today():
             errors["date"] = "Invoice date cannot be in the future."
 
+        if self.due_date < self.date:
+            errors["due_date"] = "Due date cannot be before the invoice date."
+
         if errors:
             raise ValidationError(errors)
-
 
     def __str__(self):
         return f"Invoice {self.pk or 'New'} - {self.supplier} ({self.state})"

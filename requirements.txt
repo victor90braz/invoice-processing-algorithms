@@ -2,6 +2,8 @@ asgiref==3.8.1
 cffi==1.17.1
 cryptography==44.0.1
 Django==5.1.6
+factory_boy==3.3.3
+Faker==36.1.1
 pycparser==2.22
 PyMySQL==1.1.1
 python-dotenv==1.0.1
