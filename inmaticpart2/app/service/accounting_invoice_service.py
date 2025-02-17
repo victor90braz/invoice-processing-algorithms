@@ -1,5 +1,5 @@
 from typing import List, Dict
-from datetime import date as datetime_date, datetime
+from datetime import date as datetime_date, datetime, timedelta
 from decimal import Decimal
 from collections import defaultdict
 from inmaticpart2.database.builder.invoice_builder import InvoiceBuilder
@@ -21,12 +21,13 @@ class AccountingInvoiceService:
             if invoice.total_value < Decimal("0.00"):
                 raise ValueError(f"Invoice {invoice.number} with amount {invoice.total_value} is not valid.")
 
+        # Apply filters based on provided parameters
         if start_date and end_date:
             self.invoice_builder.filter_by_date_range(start_date, end_date)
-
         if supplier_id:
             self.invoice_builder.filter_by_supplier(supplier_id)
 
+        # Apply filters and sort invoices
         filtered_invoices = self.invoice_builder.apply_filters(invoices)
         sorted_invoices = self.invoice_builder.sort_invoices_by_date(filtered_invoices)
 
@@ -35,6 +36,7 @@ class AccountingInvoiceService:
 
         self.validate_invoice_format([invoice.number for invoice in sorted_invoices])
 
+        # Group, process invoices, and return results
         grouped_invoices = self.group_invoices_by_supplier_and_month(sorted_invoices)
         accounting_entries = self.process_grouped_invoices(grouped_invoices)
 
@@ -88,33 +90,47 @@ class AccountingInvoiceService:
                 })
 
         return accounting_entries
-    
-    def cashflow_projection(start_date: datetime, end_date: datetime, invoices: List[InvoiceModel]):
-        builder = InvoiceBuilder()
-        builder.filter_by_date_range(start_date, end_date)
-        filtered_invoices = builder.apply_filters(invoices)
-        sorted_invoices = builder.sort_invoices_by_date(filtered_invoices)
 
-        weekly_cashflow = {}
-        monthly_cashflow = {}
-        total_balance = Decimal('0.00')
+    def cashflow_projection(self, start_date: datetime, end_date: datetime, invoices: List[InvoiceModel]):
+        start_date = start_date  # Convert to date
+        end_date = end_date  # Convert to date
 
+        # First, apply filters based on the date range and other parameters
+        if start_date and end_date:
+            self.invoice_builder.filter_by_date_range(start_date, end_date)
+
+        # Apply filters and sort invoices
+        filtered_invoices = self.invoice_builder.apply_filters(invoices)
+        
+        # Debug: Log the filtered invoices
+        print(f"Filtered invoices (after applying filters): {filtered_invoices}")
+
+        sorted_invoices = self.invoice_builder.sort_invoices_by_date(filtered_invoices)
+
+        # Initialize variables to accumulate the projections
+        total_balance = sum(invoice.total_value for invoice in sorted_invoices)
+
+        weekly_cashflow = defaultdict(Decimal)
+        monthly_cashflow = defaultdict(Decimal)
+
+        # Calculate monthly cashflow projections
         for invoice in sorted_invoices:
-            week = invoice.date.strftime("%Y-%U")
-            month = invoice.date.strftime("%Y-%m")
+            # Group by month for monthly cashflow
+            month_str = invoice.date.strftime("%Y-%m")  # Get the month as YYYY-MM format
+            monthly_cashflow[month_str] += invoice.total_value
 
-            if week not in weekly_cashflow:
-                weekly_cashflow[week] = Decimal('0.00')
-            weekly_cashflow[week] += invoice.total_value
+            # Calculate weekly cashflow (if necessary)
+            week_start = invoice.date - timedelta(days=invoice.date.weekday())  # Get the start of the week
+            weekly_cashflow[week_start.strftime("%Y-%m-%d")] += invoice.total_value
 
-            if month not in monthly_cashflow:
-                monthly_cashflow[month] = Decimal('0.00')
-            monthly_cashflow[month] += invoice.total_value
+        # Debug: Log the total balance and cashflow projections
+        print(f"Total Balance: {total_balance}")
+        print(f"Weekly Cashflow: {dict(weekly_cashflow)}")
+        print(f"Monthly Cashflow: {dict(monthly_cashflow)}")
 
-            total_balance += invoice.total_value
-
+        # Return the result with monthly cashflow and weekly cashflow if needed
         return {
             "total_balance": total_balance,
-            "weekly_cashflow": weekly_cashflow,
-            "monthly_cashflow": monthly_cashflow,
+            "weekly_cashflow": dict(weekly_cashflow),  # Grouped by week
+            "monthly_cashflow": dict(monthly_cashflow),  # Grouped by month
         }

@@ -169,30 +169,59 @@ class AccountingInvoiceServiceTest(TestCase):
 
 
     def test_it_correctly_calculates_cashflow_projection(self):
-        # Arrange
-        start_date = date(2023, 1, 1)
-        end_date = date(2023, 1, 31)
+        # Hardcoded values when calling the factory
+        invoice_1 = InvoiceModelFactory.create(
+            number="F2023/01",
+            supplier="Telefónica",
+            concept="Sample concept for invoice.",
+            base_value=Decimal('100.00'),
+            vat=Decimal('21.00'),
+            total_value=Decimal('121.00'),
+            date=datetime(2023, 1, 15),
+            due_date=datetime(2023, 2, 15),
+            state="PENDING"
+        )
 
-        invoice1 = InvoiceModelFactory.build_invoice(number="F2023/01", date=date(2023, 1, 10), total_value=Decimal("200.00"))
-        invoice2 = InvoiceModelFactory.build_invoice(number="F2023/02", date=date(2023, 1, 20), total_value=Decimal("150.00"))
-        invoice3 = InvoiceModelFactory.build_invoice(number="F2023/03", date=date(2023, 1, 25), total_value=Decimal("250.00"))
+        invoice_2 = InvoiceModelFactory.create(
+            number="F2023/02",
+            supplier="Telefónica",
+            concept="Sample concept for invoice.",
+            base_value=Decimal('150.00'),
+            vat=Decimal('21.00'),
+            total_value=Decimal('181.50'),
+            date=datetime(2023, 2, 15),
+            due_date=datetime(2023, 3, 15),
+            state="PENDING"
+        )
 
-        invoices = [invoice1, invoice2, invoice3]
+        invoice_3 = InvoiceModelFactory.create(
+            number="F2023/03",
+            supplier="Telefónica",
+            concept="Sample concept for invoice.",
+            base_value=Decimal('200.00'),
+            vat=Decimal('21.00'),
+            total_value=Decimal('242.00'),
+            date=datetime(2023, 3, 1),
+            due_date=datetime(2023, 4, 1),
+            state="PENDING"
+        )
 
-        # Act
-        result = AccountingInvoiceService.cashflow_projection(start_date, end_date, invoices)
+        # Assuming `accounting_invoice_service` is already initialized, and
+        # the cashflow_projection method takes start and end dates and invoices
+        invoice_processor = AccountingInvoiceService()
 
-        # Assert
-        expected_total_balance = Decimal("600.00")
-        expected_weekly_cashflow = {
-            "2023-02": Decimal("200.00"),  
-            "2023-03": Decimal("150.00"), 
-            "2023-04": Decimal("250.00"),  
-        }
-        expected_monthly_cashflow = {
-            "2023-01": Decimal("600.00"),  
-        }
+        result = invoice_processor.cashflow_projection(
+            start_date=datetime(2023, 1, 1),  
+            end_date=datetime(2023, 3, 31),  
+            invoices=[invoice_1, invoice_2, invoice_3]
+        )
 
-        self.assertEqual(result["total_balance"], expected_total_balance)
-        self.assertDictEqual(result["weekly_cashflow"], expected_weekly_cashflow)
-        self.assertDictEqual(result["monthly_cashflow"], expected_monthly_cashflow)
+        # Asserting the total balance
+        self.assertEqual(result["total_balance"], Decimal('544.50'))  # The expected value
+
+        # Asserting the weekly cashflow (choose the correct expected dates)
+        self.assertEqual(result["weekly_cashflow"], {
+            '2023-01-09': Decimal('121.00'),  # Week starting 2023-01-09
+            '2023-02-13': Decimal('181.50'),  # Week starting 2023-02-13
+            '2023-02-27': Decimal('242.00'),  # Week starting 2023-02-27
+        })

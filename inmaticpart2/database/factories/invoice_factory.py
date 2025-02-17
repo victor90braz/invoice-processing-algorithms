@@ -19,7 +19,7 @@ class InvoiceModelFactory(factory.django.DjangoModelFactory):
     total_value = factory.LazyAttribute(lambda o: o.base_value + (o.base_value * o.vat / Decimal('100')))
     date = datetime_date(2023, 1, 15)
     due_date = factory.LazyAttribute(lambda o: o.date + timedelta(days=30))  
-    state = InvoiceStates.DRAFT
+    state = InvoiceStates.PENDING
 
     @classmethod
     def build_invoice(cls, **kwargs):
